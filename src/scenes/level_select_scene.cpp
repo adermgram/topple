@@ -41,12 +41,18 @@ LevelSelectScene::LevelSelectScene(AppContext& context)
 }
 
 void LevelSelectScene::Update(float dt) {
-    if (IsKeyPressed(KEY_ESCAPE) || backButton_.Update(dt)) {
+    bool back = IsKeyPressed(KEY_ESCAPE);
+    if (backButton_.Update(dt)) {
+        context_.sound.Play(audio::Sfx::Click);
+        back = true;
+    }
+    if (back) {
         context_.scenes.Replace(std::make_unique<MenuScene>(context_));
         return;
     }
     for (size_t i = 0; i < levelButtons_.size(); i++) {
         if (levelButtons_[i].Update(dt)) {
+            context_.sound.Play(audio::Sfx::Click);
             context_.scenes.Replace(std::make_unique<PlayScene>(context_, (int)i));
             return;
         }

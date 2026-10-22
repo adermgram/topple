@@ -14,6 +14,7 @@ Drag the ball back in the slingshot, release, and knock down every target before
 | Aim and fire | Press the ball with the mouse, drag back, release |
 | Cancel a shot | Release the ball close to the sling |
 | Back to level select | `Esc` or the Levels button |
+| Mute or unmute sound | `M` |
 
 - Pick a level on the level select screen. Each level gives you a limited number of shots (4 to 6).
 - The dotted line previews the flight path. It ignores obstacles, so it shows where the ball goes if nothing is in the way.
@@ -46,6 +47,7 @@ The game loads fonts relative to the executable (`resources/` is copied next to 
 ```
 src/
   app/      App, Scene interface, SceneManager, AppContext, Pointer (mouse state)
+  audio/    SoundBank (plays effects) and synth (generates them from oscillators and noise)
   physics/  Box2D wrapper: pixels <-> metres, fixed time step, collision impacts
   game/     Level, LevelDef + levels.cpp (level data), Progress (saved stars), rating, Block, Ball, Target, Slingshot, Effects
   ui/       Theme (palette, fonts), Button, ResultBanner (choice buttons, stars), star drawing
@@ -59,6 +61,7 @@ Design notes:
 - **Scenes.** The `SceneManager` holds the active scene and applies replacements at the start of the next frame, so a scene can safely ask to be replaced from inside its own update.
 - **Physics is isolated.** Only `physics/` knows about Box2D units. Everything else works in pixels with y pointing down, like the screen. The simulation runs on a fixed 60 Hz step, so it behaves the same at any frame rate.
 - **Level vs. rules.** `game::Level` owns the physics world and everything in it. `PlayScene` owns the rules and the UI. Levels are plain data (`LevelDef`, built with a small `Builder` in `levels.cpp`), so adding one means adding a function there, not touching the rules.
+- **Sound without files.** The effects are synthesised in `audio/synth.cpp` (sine tones, filtered noise), so there are no audio assets or licences to manage. `Level::Update` reports what happened (targets destroyed, strongest impact) and `PlayScene` decides which sounds to play.
 - **Input.** Game objects such as the `Slingshot` receive a `Pointer` struct instead of polling raylib, and report what happened (a `Launch`) instead of creating bodies themselves.
 
 ## Credits

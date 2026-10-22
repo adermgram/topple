@@ -49,12 +49,18 @@ void Level::Fire(Vector2 from, Vector2 velocityPxPerSec) {
     balls_.back().Launch(velocityPxPerSec);
 }
 
-void Level::Update(float dt) {
+LevelEvents Level::Update(float dt) {
+    LevelEvents events;
+
     world_.Update(dt);
+    for (const physics::Impact& impact : world_.impacts())
+        events.strongestImpact = std::max(events.strongestImpact, impact.impulse);
     ApplyImpacts();
+
     for (Target& target : targets_) target.Update(dt);
-    RemoveDestroyedTargets();
+    events.targetsDestroyed = RemoveDestroyedTargets();
     effects_.Update(dt);
+    return events;
 }
 
 void Level::ApplyImpacts() {
@@ -64,7 +70,8 @@ void Level::ApplyImpacts() {
                 target.ApplyImpact(impact.impulse);
 }
 
-void Level::RemoveDestroyedTargets() {
+int Level::RemoveDestroyedTargets() {
+    int removed = 0;
     for (auto it = targets_.begin(); it != targets_.end();) {
         if (!it->destroyed()) {
             ++it;
@@ -73,7 +80,9 @@ void Level::RemoveDestroyedTargets() {
         effects_.Burst(it->position(), Target::COLOR, 16);
         world_.DestroyBody(it->body());
         it = targets_.erase(it);
+        removed++;
     }
+    return removed;
 }
 
 void Level::Draw() const {

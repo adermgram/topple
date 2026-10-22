@@ -11,13 +11,19 @@
 
 namespace game {
 
+// What happened during one Update, for the owner to react to (sounds, rules, ...)
+struct LevelEvents {
+    int targetsDestroyed = 0;
+    float strongestImpact = 0.0f;   // hardest collision this update; small values are just resting contact
+};
+
 // Everything that lives in the physics world for one puzzle: terrain, structures,
-// targets and fired balls. Knows nothing about the rules (win/lose) or the UI.
+// targets and fired balls. Knows nothing about the rules (win/lose), sound or the UI.
 class Level {
 public:
     explicit Level(const LevelDef& def);
 
-    void Update(float dt);
+    LevelEvents Update(float dt);
     void Draw() const;
 
     void Fire(Vector2 from, Vector2 velocityPxPerSec);
@@ -31,7 +37,7 @@ public:
 private:
     void Build(const LevelDef& def);
     void ApplyImpacts();
-    void RemoveDestroyedTargets();
+    int RemoveDestroyedTargets();   // returns how many were removed
 
     // Declared first: blocks, targets and balls hold pointers into the world
     physics::World world_;

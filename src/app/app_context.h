@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/scene_manager.h"
+#include "audio/sound_bank.h"
 #include "game/progress.h"
 #include "ui/theme.h"
 
@@ -9,4 +10,5 @@ struct AppContext {
     ui::Theme& theme;
     SceneManager& scenes;
     game::Progress& progress;
+    audio::SoundBank& sound;
 };

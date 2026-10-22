@@ -13,6 +13,9 @@ App::WindowGuard::WindowGuard() {
 
 App::WindowGuard::~WindowGuard() { CloseWindow(); }
 
+App::AudioGuard::AudioGuard() { InitAudioDevice(); }
+App::AudioGuard::~AudioGuard() { CloseAudioDevice(); }
+
 // Progress is saved next to the executable, like the resources
 App::App() : progress_(std::string(GetApplicationDirectory()) + "progress.txt") {
     scenes_.Replace(std::make_unique<MenuScene>(context_));
@@ -20,6 +23,7 @@ App::App() : progress_(std::string(GetApplicationDirectory()) + "progress.txt") 
 
 void App::Run() {
     while (!WindowShouldClose() && !scenes_.QuitRequested()) {
+        if (IsKeyPressed(KEY_M)) sound_.ToggleMute();
         scenes_.Update(std::min(GetFrameTime(), config::MAX_FRAME_TIME));
 
         BeginDrawing();

@@ -21,7 +21,10 @@ MenuScene::MenuScene(AppContext& context)
       quitButton_("Quit", CenteredButton(360 + BUTTON_H + BUTTON_GAP)) {}
 
 void MenuScene::Update(float dt) {
-    if (playButton_.Update(dt)) context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
+    if (playButton_.Update(dt)) {
+        context_.sound.Play(audio::Sfx::Click);
+        context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
+    }
     if (quitButton_.Update(dt)) context_.scenes.Quit();
 }
 

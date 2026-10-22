@@ -4,6 +4,7 @@
 #include "game/level_def.h"
 #include "game/rating.h"
 #include "scenes/level_select_scene.h"
+#include <algorithm>
 #include <memory>
 #include <string>
 
@@ -12,6 +13,14 @@ namespace {
 constexpr float WIN_DELAY = 0.8f;          // let the last burst play before the banner
 constexpr float LOSE_MIN_WAIT = 2.0f;      // after the last shot, always give it time to land
 constexpr float LOSE_MAX_WAIT = 8.0f;      // ...but don't wait forever for things to stop moving
+
+// Collision impulses: pieces settling stay below ~6, a ball landing reaches 20-45
+constexpr float HIT_SOUND_MIN_IMPACT = 8.0f;
+constexpr float HIT_SOUND_FULL_VOLUME_AT = 40.0f;
+constexpr float HIT_SOUND_MIN_VOLUME = 0.3f;
+constexpr float HIT_SOUND_COOLDOWN = 0.08f;   // a pile-up shouldn't turn into a machine gun
+constexpr float HIT_SOUND_BREAKTHROUGH = 1.5f; // ...but a hit this much harder than the last one is a new event
+constexpr float HIT_SOUND_PITCH_VARIATION = 0.15f;
 
 const Color WIN_COLOR{255, 184, 76, 255};
 const Color LOSE_COLOR{232, 100, 90, 255};
@@ -34,12 +43,34 @@ bool PlayScene::HasNextLevel() const {
 
 void PlayScene::Fire(const game::Slingshot::Launch& launch) {
     level_.Fire(launch.position, launch.velocity);
+    context_.sound.Play(audio::Sfx::Launch);
     shotsLeft_--;
     sinceLastShot_ = 0.0f;
 }
 
+void PlayScene::PlaySounds(const game::LevelEvents& events, float dt) {
+    hitCooldown_ -= dt;
+    if (hitCooldown_ <= 0.0f) lastHitImpact_ = 0.0f;
+
+    if (events.targetsDestroyed > 0) context_.sound.PlayVaried(audio::Sfx::Pop);
+
+    const float impact = events.strongestImpact;
+    const bool coolingDown = hitCooldown_ > 0.0f;
+    if (impact >= HIT_SOUND_MIN_IMPACT && (!coolingDown || impact > lastHitImpact_ * HIT_SOUND_BREAKTHROUGH)) {
+        float volume = std::clamp(impact / HIT_SOUND_FULL_VOLUME_AT, HIT_SOUND_MIN_VOLUME, 1.0f);
+        context_.sound.PlayVaried(audio::Sfx::Hit, volume, HIT_SOUND_PITCH_VARIATION);
+        hitCooldown_ = HIT_SOUND_COOLDOWN;
+        lastHitImpact_ = impact;
+    }
+}
+
 void PlayScene::Update(float dt) {
-    if (IsKeyPressed(KEY_ESCAPE) || (!banner_.visible() && levelsButton_.Update(dt))) {
+    bool leave = IsKeyPressed(KEY_ESCAPE);
+    if (!banner_.visible() && levelsButton_.Update(dt)) {
+        context_.sound.Play(audio::Sfx::Click);
+        leave = true;
+    }
+    if (leave) {
         context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
         return;
     }
@@ -50,7 +81,7 @@ void PlayScene::Update(float dt) {
         SetMouseCursor(slingshot_.WantsPointer() ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 
-    level_.Update(dt);
+    PlaySounds(level_.Update(dt), dt);
     if (phase_ == Phase::Playing) UpdateRules(dt);
     HandleBanner(banner_.Update(dt));
 }
@@ -72,6 +103,8 @@ void PlayScene::Finish(Phase result) {
     phase_ = result;
     slingshot_.set_enabled(false);
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+    context_.sound.Play(result == Phase::Won ? audio::Sfx::Win : audio::Sfx::Lose);
 
     if (result == Phase::Won) {
         int used = level_.shots() - shotsLeft_;
@@ -95,6 +128,8 @@ void PlayScene::Finish(Phase result) {
 
 void PlayScene::HandleBanner(ui::ResultBanner::Action action) {
     using Action = ui::ResultBanner::Action;
+    if (action != Action::None) context_.sound.Play(audio::Sfx::Click);
+
     switch (action) {
     case Action::Retry:
         context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_));
