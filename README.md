@@ -83,14 +83,18 @@ Design notes:
 
 ## Making a release
 
-The GitHub workflow in `.github/workflows/build.yml` builds the game on Windows, Linux and macOS for every push and keeps the packaged result as a downloadable artifact on the run. To publish a release, push a tag that starts with `v`:
+The GitHub workflow in `.github/workflows/build.yml` builds the game on Windows, Linux and macOS for every push and keeps the packaged result as a downloadable artifact on the run. A release is made from a tag whose name starts with `v`. Either way, the workflow attaches the three packages once all builds succeed.
+
+**On github.com:** open the repository's *Releases* page, click *Draft a new release*, type a new tag such as `v1.0.0` in *Choose a tag* and pick *Create new tag on publish*, click *Generate release notes*, then *Publish release*. The release appears at once and the packages are added to it a few minutes later, when the builds finish.
+
+**From a terminal:** push the tag and the workflow creates the release itself, with notes generated from the commits:
 
 ```
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-When all three builds succeed, the workflow creates a GitHub Release named after the tag, with the three packages attached and release notes generated from the commits. The **Actions** tab shows progress, and the **Run workflow** button builds without releasing. Locally, `cmake --install build --prefix <folder> --component game` produces the same folder that goes into the packages.
+The **Actions** tab shows progress, and its *Run workflow* button builds without releasing. Locally, `cmake --install build --prefix <folder> --component game` produces the same folder that goes into the packages.
 
 ## License
 
