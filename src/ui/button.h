@@ -9,7 +9,7 @@ namespace ui {
 // A rounded button with an eased hover highlight and a press dip.
 class Button {
 public:
-    Button(std::string label, Rectangle bounds, bool primary = false);
+    Button(std::string label, Rectangle bounds, bool primary = false, float fontSize = 26.0f);
 
     // Returns true on the frame the button is clicked
     bool Update(float dt);
@@ -19,6 +19,7 @@ private:
     std::string label_;
     Rectangle bounds_;
     bool primary_;
+    float fontSize_;
     float hover_ = 0.0f;   // 0..1, eased toward the hover state
     bool pressed_ = false;
 };

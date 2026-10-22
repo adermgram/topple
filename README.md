@@ -13,11 +13,12 @@ Drag the ball back in the slingshot, release, and knock down every target before
 |---|---|
 | Aim and fire | Press the ball with the mouse, drag back, release |
 | Cancel a shot | Release the ball close to the sling |
-| Back to the menu | `Esc` or the Menu button |
+| Back to level select | `Esc` or the Levels button |
 
-- You have 5 shots per round.
+- Pick a level on the level select screen. Each level gives you a limited number of shots (4 to 6).
 - The dotted line previews the flight path. It ignores obstacles, so it shows where the ball goes if nothing is in the way.
 - Hard hits damage a target and destroy it. Gentle bumps do nothing.
+- Winning earns 1 to 3 stars: 3 if you finish with at least 2 shots to spare, 2 with one spare, 1 otherwise. Your best result per level is saved in `progress.txt` next to the executable.
 - You win when every target is gone. You lose when you're out of shots and everything has stopped moving.
 
 ## Build and run
@@ -46,9 +47,9 @@ The game loads fonts relative to the executable (`resources/` is copied next to 
 src/
   app/      App, Scene interface, SceneManager, AppContext, Pointer (mouse state)
   physics/  Box2D wrapper: pixels <-> metres, fixed time step, collision impacts
-  game/     Level, Block, Ball, Target, Slingshot, Effects (particles)
-  ui/       Theme (palette, fonts), Button, ResultBanner
-  scenes/   MenuScene, PlayScene (the rules: shots, win and lose)
+  game/     Level, LevelDef + levels.cpp (level data), Progress (saved stars), rating, Block, Ball, Target, Slingshot, Effects
+  ui/       Theme (palette, fonts), Button, ResultBanner (choice buttons, stars), star drawing
+  scenes/   MenuScene, LevelSelectScene, PlayScene (the rules: shots, win and lose)
 resources/
   fonts/    Poppins
 ```
@@ -57,7 +58,7 @@ Design notes:
 
 - **Scenes.** The `SceneManager` holds the active scene and applies replacements at the start of the next frame, so a scene can safely ask to be replaced from inside its own update.
 - **Physics is isolated.** Only `physics/` knows about Box2D units. Everything else works in pixels with y pointing down, like the screen. The simulation runs on a fixed 60 Hz step, so it behaves the same at any frame rate.
-- **Level vs. rules.** `game::Level` owns the physics world and everything in it. `PlayScene` owns the rules and the UI. Adding a level means adding content to the `Level`, not touching the rules.
+- **Level vs. rules.** `game::Level` owns the physics world and everything in it. `PlayScene` owns the rules and the UI. Levels are plain data (`LevelDef`, built with a small `Builder` in `levels.cpp`), so adding one means adding a function there, not touching the rules.
 - **Input.** Game objects such as the `Slingshot` receive a `Pointer` struct instead of polling raylib, and report what happened (a `Launch`) instead of creating bodies themselves.
 
 ## Credits

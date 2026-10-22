@@ -1,6 +1,6 @@
 #include "scenes/menu_scene.h"
 #include "config.h"
-#include "scenes/play_scene.h"
+#include "scenes/level_select_scene.h"
 #include <memory>
 
 namespace {
@@ -21,7 +21,7 @@ MenuScene::MenuScene(AppContext& context)
       quitButton_("Quit", CenteredButton(360 + BUTTON_H + BUTTON_GAP)) {}
 
 void MenuScene::Update(float dt) {
-    if (playButton_.Update(dt)) context_.scenes.Replace(std::make_unique<PlayScene>(context_));
+    if (playButton_.Update(dt)) context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
     if (quitButton_.Update(dt)) context_.scenes.Quit();
 }
 

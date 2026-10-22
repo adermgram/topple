@@ -13,7 +13,8 @@ App::WindowGuard::WindowGuard() {
 
 App::WindowGuard::~WindowGuard() { CloseWindow(); }
 
-App::App() {
+// Progress is saved next to the executable, like the resources
+App::App() : progress_(std::string(GetApplicationDirectory()) + "progress.txt") {
     scenes_.Replace(std::make_unique<MenuScene>(context_));
 }
 

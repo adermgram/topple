@@ -9,7 +9,6 @@ namespace {
 
 constexpr float HOVER_SPEED = 14.0f;
 constexpr float ROUNDNESS = 0.35f;
-constexpr float FONT_SIZE = 26.0f;
 
 Color Mix(Color a, Color b, float t) {
     return {(unsigned char)Lerp(a.r, b.r, t), (unsigned char)Lerp(a.g, b.g, t),
@@ -18,8 +17,8 @@ Color Mix(Color a, Color b, float t) {
 
 }  // namespace
 
-Button::Button(std::string label, Rectangle bounds, bool primary)
-    : label_(std::move(label)), bounds_(bounds), primary_(primary) {}
+Button::Button(std::string label, Rectangle bounds, bool primary, float fontSize)
+    : label_(std::move(label)), bounds_(bounds), primary_(primary), fontSize_(fontSize) {}
 
 bool Button::Update(float dt) {
     bool over = CheckCollisionPointRec(GetMousePosition(), bounds_);
@@ -54,8 +53,8 @@ void Button::Draw(const Theme& theme) const {
     DrawRectangleRounded(body, ROUNDNESS, 12, Mix(base, lit, hover_));
 
     Color textColor = primary_ ? Color{30, 24, 14, 255} : p.text;
-    Vector2 center = {body.x + body.width / 2, body.y + body.height / 2 - FONT_SIZE * 0.6f};
-    theme.DrawText(label_, center, FONT_SIZE, textColor, Align::Center, FontWeight::SemiBold);
+    Vector2 center = {body.x + body.width / 2, body.y + body.height / 2 - fontSize_ * 0.6f};
+    theme.DrawText(label_, center, fontSize_, textColor, Align::Center, FontWeight::SemiBold);
 }
 
 }  // namespace ui

@@ -2,6 +2,7 @@
 
 #include "app/app_context.h"
 #include "app/scene_manager.h"
+#include "game/progress.h"
 #include "ui/theme.h"
 
 class App {
@@ -20,5 +21,6 @@ private:
     WindowGuard window_;
     ui::Theme theme_;
     SceneManager scenes_;
-    AppContext context_{theme_, scenes_};
+    game::Progress progress_;
+    AppContext context_{theme_, scenes_, progress_};
 };

@@ -10,7 +10,7 @@
 // One round: the player fires a limited number of shots at the level's targets.
 class PlayScene : public Scene {
 public:
-    explicit PlayScene(AppContext& context);
+    PlayScene(AppContext& context, int levelIndex);
     ~PlayScene() override;
 
     void Update(float dt) override;
@@ -23,12 +23,14 @@ private:
     void UpdateRules(float dt);
     void Finish(Phase result);
     void HandleBanner(ui::ResultBanner::Action action);
+    bool HasNextLevel() const;
     void DrawHud() const;
 
     AppContext& context_;
+    int levelIndex_;
     game::Level level_;               // declared before slingshot_, which is built from it
     game::Slingshot slingshot_;
-    ui::Button menuButton_;
+    ui::Button levelsButton_;
     ui::ResultBanner banner_;
 
     Phase phase_ = Phase::Playing;

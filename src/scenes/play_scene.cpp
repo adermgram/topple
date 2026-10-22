@@ -1,7 +1,9 @@
 #include "scenes/play_scene.h"
 #include "app/pointer.h"
 #include "config.h"
-#include "scenes/menu_scene.h"
+#include "game/level_def.h"
+#include "game/rating.h"
+#include "scenes/level_select_scene.h"
 #include <memory>
 #include <string>
 
@@ -16,13 +18,19 @@ const Color LOSE_COLOR{232, 100, 90, 255};
 
 }  // namespace
 
-PlayScene::PlayScene(AppContext& context)
+PlayScene::PlayScene(AppContext& context, int levelIndex)
     : context_(context),
+      levelIndex_(levelIndex),
+      level_(game::Levels().at(levelIndex)),
       slingshot_(level_.slingAnchor(), level_.groundY()),
-      menuButton_("Menu", {20, 20, 120, 46}),
+      levelsButton_("Levels", {20, 20, 120, 46}),
       shotsLeft_(level_.shots()) {}
 
 PlayScene::~PlayScene() { SetMouseCursor(MOUSE_CURSOR_DEFAULT); }
+
+bool PlayScene::HasNextLevel() const {
+    return levelIndex_ + 1 < (int)game::Levels().size();
+}
 
 void PlayScene::Fire(const game::Slingshot::Launch& launch) {
     level_.Fire(launch.position, launch.velocity);
@@ -31,8 +39,8 @@ void PlayScene::Fire(const game::Slingshot::Launch& launch) {
 }
 
 void PlayScene::Update(float dt) {
-    if (IsKeyPressed(KEY_ESCAPE) || (!banner_.visible() && menuButton_.Update(dt))) {
-        context_.scenes.Replace(std::make_unique<MenuScene>(context_));
+    if (IsKeyPressed(KEY_ESCAPE) || (!banner_.visible() && levelsButton_.Update(dt))) {
+        context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
         return;
     }
 
@@ -59,24 +67,47 @@ void PlayScene::UpdateRules(float dt) {
 }
 
 void PlayScene::Finish(Phase result) {
+    using Action = ui::ResultBanner::Action;
+
     phase_ = result;
     slingshot_.set_enabled(false);
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
     if (result == Phase::Won) {
         int used = level_.shots() - shotsLeft_;
-        banner_.Show("LEVEL CLEARED", "Done in " + std::to_string(used) + (used == 1 ? " shot" : " shots"),
-                     WIN_COLOR);
+        int stars = game::StarsForShotsLeft(shotsLeft_);
+        context_.progress.Record(levelIndex_, stars);
+
+        std::string subtitle = "Done in " + std::to_string(used) + (used == 1 ? " shot" : " shots");
+        if (HasNextLevel())
+            banner_.Show("LEVEL CLEARED", subtitle, WIN_COLOR,
+                         {{Action::Next, "Next", true}, {Action::Retry, "Retry", false},
+                          {Action::Levels, "Levels", false}},
+                         stars);
+        else
+            banner_.Show("ALL CLEARED", subtitle, WIN_COLOR,
+                         {{Action::Retry, "Retry", false}, {Action::Levels, "Levels", true}}, stars);
     } else {
         banner_.Show("OUT OF SHOTS", std::to_string(level_.targetsRemaining()) + " targets survived",
-                     LOSE_COLOR);
+                     LOSE_COLOR, {{Action::Retry, "Retry", true}, {Action::Levels, "Levels", false}});
     }
 }
 
 void PlayScene::HandleBanner(ui::ResultBanner::Action action) {
     using Action = ui::ResultBanner::Action;
-    if (action == Action::Retry) context_.scenes.Replace(std::make_unique<PlayScene>(context_));
-    else if (action == Action::Menu) context_.scenes.Replace(std::make_unique<MenuScene>(context_));
+    switch (action) {
+    case Action::Retry:
+        context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_));
+        break;
+    case Action::Next:
+        context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_ + 1));
+        break;
+    case Action::Levels:
+        context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
+        break;
+    case Action::None:
+        break;
+    }
 }
 
 void PlayScene::DrawHud() const {
@@ -92,9 +123,12 @@ void PlayScene::DrawHud() const {
     theme.DrawText("Targets left: " + std::to_string(level_.targetsRemaining()),
                    {config::SCREEN_W - 20.0f, 70}, 22, p.textDim, ui::Align::Right);
 
-    if (shotsLeft_ == level_.shots() && phase_ == Phase::Playing)
-        theme.DrawText("Drag the ball back and release to fire",
-                       {config::SCREEN_W / 2.0f, 28}, 22, p.textDim, ui::Align::Center);
+    const float cx = config::SCREEN_W / 2.0f;
+    theme.DrawText("Level " + std::to_string(levelIndex_ + 1) + ": " + game::Levels()[levelIndex_].name,
+                   {cx, 22}, 26, p.text, ui::Align::Center, ui::FontWeight::SemiBold);
+    if (levelIndex_ == 0 && shotsLeft_ == level_.shots() && phase_ == Phase::Playing)
+        theme.DrawText("Drag the ball back and release to fire", {cx, 60}, 20, p.textDim,
+                       ui::Align::Center);
 }
 
 void PlayScene::Draw() const {
@@ -104,7 +138,7 @@ void PlayScene::Draw() const {
     slingshot_.Draw();
     level_.Draw();
 
-    menuButton_.Draw(theme);
+    levelsButton_.Draw(theme);
     DrawHud();
     banner_.Draw(theme);
 }
