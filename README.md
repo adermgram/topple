@@ -92,6 +92,10 @@ git push origin v1.0.0
 
 When all three builds succeed, the workflow creates a GitHub Release named after the tag, with the three packages attached and release notes generated from the commits. The **Actions** tab shows progress, and the **Run workflow** button builds without releasing. Locally, `cmake --install build --prefix <folder> --component game` produces the same folder that goes into the packages.
 
+## License
+
+Topple's own code is released under the [MIT License](LICENSE). raylib, Box2D and the Poppins font keep their own licenses, listed below and included with every release.
+
 ## Credits
 
 - [raylib](https://www.raylib.com/) by Ramon Santamaria and contributors (zlib license): windowing, drawing, input.

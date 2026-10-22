@@ -68,7 +68,7 @@ add_custom_target(run COMMAND topple DEPENDS topple
 # own install rules (headers, libraries) out of it.
 install(TARGETS topple RUNTIME DESTINATION . COMPONENT game)
 install(DIRECTORY resources DESTINATION . COMPONENT game)
-install(FILES README.md DESTINATION . COMPONENT game)
+install(FILES README.md LICENSE DESTINATION . COMPONENT game)
 if(raylib_SOURCE_DIR)
   install(FILES ${raylib_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME LICENSE-raylib.txt COMPONENT game)
 endif()
