@@ -4,6 +4,9 @@ A physics puzzle game in the style of Angry Birds, written in C++17 with [raylib
 
 Drag the ball back in the slingshot, release, and knock down every target before you run out of shots.
 
+![Main menu](docs/images/menu.png)
+![Aiming a shot, with the dotted flight preview](docs/images/gameplay.png)
+
 ## How to play
 
 | Action | Control |
