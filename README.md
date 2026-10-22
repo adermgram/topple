@@ -53,7 +53,7 @@ src/
   app/      App, Scene interface, SceneManager, AppContext, Pointer (mouse state)
   audio/    SoundBank (plays effects) and synth (generates them from oscillators and noise)
   physics/  Box2D wrapper: pixels <-> metres, fixed time step, collision impacts
-  game/     Level, LevelDef + levels.cpp (level data), Progress (saved stars), rating, Block (+ BlockKind materials), Ball (+ BallKind), Target, Slingshot, Effects
+  game/     Level, LevelDef + levels.cpp (level data), Progress (saved stars), rating, Block (+ BlockKind materials), Ball (+ BallKind), Target, Slingshot, Effects (dust, shards, rings), ScreenShake
   ui/       Theme (palette, fonts), Button, ChoiceDialog (choice buttons, stars), star drawing
   scenes/   MenuScene, LevelSelectScene, PlayScene (the rules: shots, win and lose)
 resources/
@@ -65,6 +65,7 @@ Design notes:
 - **Scenes.** The `SceneManager` holds the active scene and applies replacements at the start of the next frame, so a scene can safely ask to be replaced from inside its own update.
 - **Physics is isolated.** Only `physics/` knows about Box2D units. Everything else works in pixels with y pointing down, like the screen. The simulation runs on a fixed 60 Hz step, so it behaves the same at any frame rate.
 - **Level vs. rules.** `game::Level` owns the physics world and everything in it. `PlayScene` owns the rules and the UI. Levels are plain data (`LevelDef`, built with a small `Builder` in `levels.cpp`), so adding one means adding a function there, not touching the rules.
+- **Game feel.** Hard hits shake the world (not the HUD) with the "trauma" model in `screen_shake.cpp`: hits raise a value that fades fast, and the shake grows with its square, so small bumps barely register. Impact dust is emitted at the exact contact point, coloured by material. Both are tuned from measured collision strengths rather than guessed, and nothing fires while a level is still settling.
 - **Ball kinds.** Like materials, a ball's size, weight and colour come from one table in `ball.cpp`. A level's `ammo` is just a list of `BallKind`s, and `Level::TriggerAbility` handles the split, so `PlayScene` only forwards the click.
 - **Materials in one table.** What a block is made of (`BlockKind`: wood, stone, glass) decides its density, colour and whether it breaks. That table lives in `block.cpp`, so a new material is one entry plus a switch case, and level data only names the kind.
 - **Sound without files.** The effects are synthesised in `audio/synth.cpp` (sine tones, filtered noise), so there are no audio assets or licences to manage. `Level::Update` reports what happened (targets destroyed, strongest impact) and `PlayScene` decides which sounds to play.

@@ -44,6 +44,7 @@ public:
 private:
     void Build(const LevelDef& def);
     void ApplyImpacts();
+    void EmitImpactDust();
     int RemoveDestroyedTargets();   // returns how many were removed
     int RemoveDestroyedBlocks();    // broken glass; returns how many
     const Ball* FindSplittable() const;

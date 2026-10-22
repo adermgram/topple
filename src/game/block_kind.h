@@ -7,7 +7,8 @@ enum class BlockKind {
     Crate,     // light wood: boxes
     Stone,     // heavy and unbreakable
     Glass,     // light and fragile: cracks, then shatters
-    Terrain,   // ground and walls, never moves (not used in level data)
+    Terrain,   // the visible ground: never moves (not used in level data)
+    Wall,      // an invisible boundary at the screen edge: never moves (not used in level data)
 };
 
 }  // namespace game

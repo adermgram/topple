@@ -23,6 +23,7 @@ const Style& StyleFor(BlockKind kind) {
     static const Style stone   {{2.5f, 0.7f, 0.02f}, {128, 134, 148, 255}, UNBREAKABLE, 0.0f};
     static const Style glass   {{0.6f, 0.3f, 0.05f}, {150, 215, 235, 150}, 10.0f, 6.0f};
     static const Style terrain {{1.0f, 0.6f, 0.05f}, {58, 68, 98, 255}, UNBREAKABLE, 0.0f};
+    static const Style wall    {{1.0f, 0.6f, 0.05f}, {0, 0, 0, 0}, UNBREAKABLE, 0.0f};
 
     switch (kind) {
     case BlockKind::Plank:   return plank;
@@ -30,6 +31,7 @@ const Style& StyleFor(BlockKind kind) {
     case BlockKind::Stone:   return stone;
     case BlockKind::Glass:   return glass;
     case BlockKind::Terrain: return terrain;
+    case BlockKind::Wall:    return wall;
     }
     return plank;
 }
@@ -58,6 +60,8 @@ void Block::ApplyImpact(float impulse) {
 }
 
 void Block::Draw() const {
+    if (kind_ == BlockKind::Wall) return;   // only there to keep things on screen
+
     const Style& style = StyleFor(kind_);
     const Vector2 center = position();
     const float angle = body_->GetAngle();   // radians; y-down makes positive = clockwise, same as raylib

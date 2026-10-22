@@ -24,12 +24,13 @@ struct Material {
     float restitution = 0.05f;   // bounciness
 };
 
-// Two bodies colliding. impulse is the total normal impulse of the contact (N*s):
+// Two bodies colliding, and where (px). impulse is the total normal impulse of the contact (N*s):
 // resting contact gives small values, a hard hit gives large ones.
 struct Impact {
     const b2Body* a;
     const b2Body* b;
     float impulse;
+    Vector2 point;
 };
 
 class World {

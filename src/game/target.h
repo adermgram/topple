@@ -6,6 +6,7 @@
 namespace game {
 
 // Something to knock down. Hard hits wear its health down; it is destroyed at zero.
+// It blinks when idle, goes dizzy when hit and looks sicker as it gets hurt.
 // The body belongs to the physics::World, which must outlive the Target.
 class Target {
 public:
@@ -25,7 +26,10 @@ public:
 private:
     b2Body* body_;   // non-owning
     float health_;
-    float flash_ = 0.0f;   // seconds of hit highlight left
+    float flash_ = 0.0f;       // seconds of white hit highlight left (also drives the squash)
+    float dazed_ = 0.0f;       // seconds of dizzy face left
+    float time_ = 0.0f;        // drives the blinking
+    float blinkOffset_;        // so targets don't all blink together
 };
 
 }  // namespace game

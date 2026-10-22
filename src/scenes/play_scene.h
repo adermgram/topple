@@ -3,6 +3,7 @@
 #include "app/app_context.h"
 #include "app/scene.h"
 #include "game/level.h"
+#include "game/screen_shake.h"
 #include "game/slingshot.h"
 #include "ui/button.h"
 #include "ui/choice_dialog.h"
@@ -21,7 +22,9 @@ private:
 
     game::BallKind NextBall() const;
     void Fire(const game::Slingshot::Launch& launch);
+    void React(const game::LevelEvents& events, float dt);   // sounds and shake
     void PlaySounds(const game::LevelEvents& events, float dt);
+    Camera2D ShakeCamera() const;
     void UpdateRules(float dt);
     void Finish(Phase result);
     void UpdatePlaying(float dt);
@@ -36,6 +39,7 @@ private:
     int levelIndex_;
     game::Level level_;               // declared before slingshot_, which is built from it
     game::Slingshot slingshot_;
+    game::ScreenShake shake_;
     ui::Button levelsButton_;
     ui::ChoiceDialog dialog_;
 

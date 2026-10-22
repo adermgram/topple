@@ -19,7 +19,16 @@ World::World() : world_(b2Vec2(0.0f, GRAVITY)) {
 void World::ImpactListener::PostSolve(b2Contact* contact, const b2ContactImpulse* impulse) {
     float total = 0.0f;
     for (int i = 0; i < impulse->count; i++) total += impulse->normalImpulses[i];
-    out_.push_back({contact->GetFixtureA()->GetBody(), contact->GetFixtureB()->GetBody(), total});
+
+    // Where the bodies touch; a contact with no manifold points falls back to one body's centre
+    b2Body* bodyA = contact->GetFixtureA()->GetBody();
+    Vector2 point = ToPixels(bodyA->GetPosition());
+    if (contact->GetManifold()->pointCount > 0) {
+        b2WorldManifold world;
+        contact->GetWorldManifold(&world);
+        point = ToPixels(world.points[0]);
+    }
+    out_.push_back({bodyA, contact->GetFixtureB()->GetBody(), total, point});
 }
 
 void World::DestroyBody(b2Body* body) { world_.DestroyBody(body); }

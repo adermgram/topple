@@ -5,6 +5,7 @@
 #include "game/rating.h"
 #include "scenes/level_select_scene.h"
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 
@@ -21,6 +22,17 @@ constexpr float HIT_SOUND_MIN_VOLUME = 0.3f;
 constexpr float HIT_SOUND_COOLDOWN = 0.08f;   // a pile-up shouldn't turn into a machine gun
 constexpr float HIT_SOUND_BREAKTHROUGH = 1.5f; // ...but a hit this much harder than the last one is a new event
 constexpr float HIT_SOUND_PITCH_VARIATION = 0.15f;
+
+// Camera shake, calibrated on measured collisions: the hardest hit of a standard-ball shot is
+// about 41 (up to ~65), of a heavy-ball shot about 146 (up to ~230). A typical standard hit
+// gives trauma 0.5, a clear thump; the heavy ball reaches the cap, a real rattle.
+constexpr float SHAKE_MIN_IMPACT = 15.0f;          // below this, nothing
+constexpr float SHAKE_REFERENCE_IMPACT = 41.0f;
+constexpr float SHAKE_REFERENCE_TRAUMA = 0.5f;
+constexpr float SHAKE_EXPONENT = 0.6f;             // < 1: doubling the impact adds less than double
+constexpr float SHAKE_MAX_FROM_IMPACT = 0.9f;
+constexpr float SHAKE_PER_GLASS = 0.10f;
+constexpr float SHAKE_PER_TARGET = 0.12f;
 
 const Color WIN_COLOR{255, 184, 76, 255};
 const Color LOSE_COLOR{232, 100, 90, 255};
@@ -53,6 +65,32 @@ void PlayScene::Fire(const game::Slingshot::Launch& launch) {
     sinceLastShot_ = 0.0f;
 }
 
+// The world (not the HUD) is drawn through this camera, nudged by the shake
+Camera2D PlayScene::ShakeCamera() const {
+    const Vector2 centre = {config::SCREEN_W / 2.0f, config::SCREEN_H / 2.0f};
+    const Vector2 shake = shake_.offset();
+
+    Camera2D camera{};
+    camera.target = centre;
+    camera.offset = {centre.x + shake.x, centre.y + shake.y};
+    camera.rotation = shake_.rotationDegrees();
+    camera.zoom = 1.0f;
+    return camera;
+}
+
+void PlayScene::React(const game::LevelEvents& events, float dt) {
+    PlaySounds(events, dt);
+
+    // A hit lasts a few physics steps, so it raises the shake to a level; glass and targets
+    // are one-off events, so they add to it
+    if (events.strongestImpact >= SHAKE_MIN_IMPACT) {
+        float trauma = SHAKE_REFERENCE_TRAUMA *
+                       std::pow(events.strongestImpact / SHAKE_REFERENCE_IMPACT, SHAKE_EXPONENT);
+        shake_.Raise(std::min(trauma, SHAKE_MAX_FROM_IMPACT));
+    }
+    shake_.AddTrauma(SHAKE_PER_GLASS * events.glassShattered + SHAKE_PER_TARGET * events.targetsDestroyed);
+}
+
 void PlayScene::PlaySounds(const game::LevelEvents& events, float dt) {
     hitCooldown_ -= dt;
     if (hitCooldown_ <= 0.0f) lastHitImpact_ = 0.0f;
@@ -76,6 +114,7 @@ void PlayScene::LeaveToLevels() {
 
 void PlayScene::Update(float dt) {
     const bool escape = IsKeyPressed(KEY_ESCAPE);
+    if (phase_ != Phase::Paused) shake_.Update(dt);
 
     switch (phase_) {
     case Phase::Playing:
@@ -105,7 +144,7 @@ void PlayScene::Update(float dt) {
             LeaveToLevels();
             return;
         }
-        PlaySounds(level_.Update(dt), dt);   // let the last pieces and particles finish
+        React(level_.Update(dt), dt);   // let the last pieces and particles finish
         break;
     }
 
@@ -118,6 +157,7 @@ void PlayScene::UpdatePlaying(float dt) {
 
     // A click while a splitter is in the air splits it, instead of grabbing the sling
     Pointer pointer = ReadPointer();
+    pointer.pos = GetScreenToWorld2D(pointer.pos, ShakeCamera());   // the sling moves with the shake
     if (pointer.pressed && level_.TriggerAbility()) {
         context_.sound.Play(audio::Sfx::Split);
         pointer.pressed = false;
@@ -125,7 +165,7 @@ void PlayScene::UpdatePlaying(float dt) {
     if (auto launch = slingshot_.Update(dt, pointer)) Fire(*launch);
     SetMouseCursor(slingshot_.WantsPointer() ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 
-    PlaySounds(level_.Update(dt), dt);
+    React(level_.Update(dt), dt);
     UpdateRules(dt);
 }
 
@@ -133,6 +173,7 @@ void PlayScene::Pause() {
     using Action = ui::ChoiceDialog::Action;
 
     phase_ = Phase::Paused;
+    shake_.Reset();        // a frozen, half-shaken screen would look broken
     slingshot_.Cancel();   // a half-pulled ball goes back, so no release is missed while paused
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
@@ -252,8 +293,10 @@ void PlayScene::Draw() const {
     const ui::Theme& theme = context_.theme;
 
     theme.DrawBackground();
-    slingshot_.Draw();
-    level_.Draw();
+    BeginMode2D(ShakeCamera());
+        slingshot_.Draw();
+        level_.Draw();
+    EndMode2D();
 
     levelsButton_.Draw(theme);
     DrawHud();
