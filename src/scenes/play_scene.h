@@ -5,7 +5,7 @@
 #include "game/level.h"
 #include "game/slingshot.h"
 #include "ui/button.h"
-#include "ui/result_banner.h"
+#include "ui/choice_dialog.h"
 
 // One round: the player fires a limited number of shots at the level's targets.
 class PlayScene : public Scene {
@@ -17,14 +17,18 @@ public:
     void Draw() const override;
 
 private:
-    enum class Phase { Playing, Won, Lost };
+    enum class Phase { Playing, Paused, Won, Lost };
 
     game::BallKind NextBall() const;
     void Fire(const game::Slingshot::Launch& launch);
     void PlaySounds(const game::LevelEvents& events, float dt);
     void UpdateRules(float dt);
     void Finish(Phase result);
-    void HandleBanner(ui::ResultBanner::Action action);
+    void UpdatePlaying(float dt);
+    void LeaveToLevels();
+    void Pause();
+    void Resume();
+    void HandleChoice(ui::ChoiceDialog::Action action);
     bool HasNextLevel() const;
     void DrawHud() const;
 
@@ -33,7 +37,7 @@ private:
     game::Level level_;               // declared before slingshot_, which is built from it
     game::Slingshot slingshot_;
     ui::Button levelsButton_;
-    ui::ResultBanner banner_;
+    ui::ChoiceDialog dialog_;
 
     Phase phase_ = Phase::Playing;
     int shotsLeft_;

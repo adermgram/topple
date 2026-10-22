@@ -8,10 +8,11 @@
 
 namespace ui {
 
-// End-of-round panel over a dimmed screen, with a row of choice buttons.
-class ResultBanner {
+// A centred panel over a dimmed screen: a title, optional stars and a row of choice buttons.
+// Used for the result of a round and for the pause menu.
+class ChoiceDialog {
 public:
-    enum class Action { None, Retry, Next, Levels };
+    enum class Action { None, Resume, Retry, Next, Levels };
 
     struct Choice {
         Action action;
@@ -24,6 +25,7 @@ public:
     // stars (0..3) adds a row of stars that pop in one by one; NO_STARS leaves it out
     void Show(std::string title, std::string subtitle, Color accent,
               const std::vector<Choice>& choices, int stars = NO_STARS);
+    void Hide() { visible_ = false; entries_.clear(); }
     bool visible() const { return visible_; }
 
     // Returns the chosen action on the frame a button is clicked

@@ -72,6 +72,13 @@ std::optional<Slingshot::Launch> Slingshot::Update(float dt, const Pointer& poin
     return std::nullopt;
 }
 
+void Slingshot::Cancel() {
+    if (state_ != State::Dragging) return;
+    state_ = State::Ready;
+    pull_ = anchor_;
+    hot_ = false;
+}
+
 void Slingshot::DrawBand(Vector2 pull) const {
     Vector2 left = {anchor_.x - PRONG_SPREAD, anchor_.y};
     Vector2 right = {anchor_.x + PRONG_SPREAD, anchor_.y};

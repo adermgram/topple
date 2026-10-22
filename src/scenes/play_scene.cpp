@@ -70,34 +70,81 @@ void PlayScene::PlaySounds(const game::LevelEvents& events, float dt) {
     }
 }
 
+void PlayScene::LeaveToLevels() {
+    context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
+}
+
 void PlayScene::Update(float dt) {
-    bool leave = IsKeyPressed(KEY_ESCAPE);
-    if (!banner_.visible() && levelsButton_.Update(dt)) {
-        context_.sound.Play(audio::Sfx::Click);
-        leave = true;
-    }
-    if (leave) {
-        context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
-        return;
-    }
+    const bool escape = IsKeyPressed(KEY_ESCAPE);
 
-    if (phase_ == Phase::Playing) {
-        slingshot_.set_enabled(shotsLeft_ > 0);
-        if (shotsLeft_ > 0) slingshot_.set_ball(NextBall());
-
-        // A click while a splitter is in the air splits it, instead of grabbing the sling
-        Pointer pointer = ReadPointer();
-        if (pointer.pressed && level_.TriggerAbility()) {
-            context_.sound.Play(audio::Sfx::Split);
-            pointer.pressed = false;
+    switch (phase_) {
+    case Phase::Playing:
+        if (escape) {
+            context_.sound.Play(audio::Sfx::Click);
+            Pause();
+        } else if (levelsButton_.Update(dt)) {
+            context_.sound.Play(audio::Sfx::Click);
+            LeaveToLevels();
+            return;
+        } else {
+            UpdatePlaying(dt);
         }
-        if (auto launch = slingshot_.Update(dt, pointer)) Fire(*launch);
-        SetMouseCursor(slingshot_.WantsPointer() ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+        break;
+
+    case Phase::Paused:
+        // Everything is frozen: only the dialog reacts
+        if (escape) {
+            context_.sound.Play(audio::Sfx::Click);
+            Resume();
+        }
+        break;
+
+    case Phase::Won:
+    case Phase::Lost:
+        if (escape) {
+            LeaveToLevels();
+            return;
+        }
+        PlaySounds(level_.Update(dt), dt);   // let the last pieces and particles finish
+        break;
     }
+
+    HandleChoice(dialog_.Update(dt));
+}
+
+void PlayScene::UpdatePlaying(float dt) {
+    slingshot_.set_enabled(shotsLeft_ > 0);
+    if (shotsLeft_ > 0) slingshot_.set_ball(NextBall());
+
+    // A click while a splitter is in the air splits it, instead of grabbing the sling
+    Pointer pointer = ReadPointer();
+    if (pointer.pressed && level_.TriggerAbility()) {
+        context_.sound.Play(audio::Sfx::Split);
+        pointer.pressed = false;
+    }
+    if (auto launch = slingshot_.Update(dt, pointer)) Fire(*launch);
+    SetMouseCursor(slingshot_.WantsPointer() ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 
     PlaySounds(level_.Update(dt), dt);
-    if (phase_ == Phase::Playing) UpdateRules(dt);
-    HandleBanner(banner_.Update(dt));
+    UpdateRules(dt);
+}
+
+void PlayScene::Pause() {
+    using Action = ui::ChoiceDialog::Action;
+
+    phase_ = Phase::Paused;
+    slingshot_.Cancel();   // a half-pulled ball goes back, so no release is missed while paused
+    SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+    dialog_.Show("PAUSED", "Level " + std::to_string(levelIndex_ + 1) + ": " + game::Levels()[levelIndex_].name,
+                 context_.theme.palette().text,
+                 {{Action::Resume, "Resume", true}, {Action::Retry, "Retry", false},
+                  {Action::Levels, "Levels", false}});
+}
+
+void PlayScene::Resume() {
+    phase_ = Phase::Playing;
+    dialog_.Hide();
 }
 
 void PlayScene::UpdateRules(float dt) {
@@ -112,7 +159,7 @@ void PlayScene::UpdateRules(float dt) {
 }
 
 void PlayScene::Finish(Phase result) {
-    using Action = ui::ResultBanner::Action;
+    using Action = ui::ChoiceDialog::Action;
 
     phase_ = result;
     slingshot_.set_enabled(false);
@@ -127,21 +174,21 @@ void PlayScene::Finish(Phase result) {
 
         std::string subtitle = "Done in " + std::to_string(used) + (used == 1 ? " shot" : " shots");
         if (HasNextLevel())
-            banner_.Show("LEVEL CLEARED", subtitle, WIN_COLOR,
+            dialog_.Show("LEVEL CLEARED", subtitle, WIN_COLOR,
                          {{Action::Next, "Next", true}, {Action::Retry, "Retry", false},
                           {Action::Levels, "Levels", false}},
                          stars);
         else
-            banner_.Show("ALL CLEARED", subtitle, WIN_COLOR,
+            dialog_.Show("ALL CLEARED", subtitle, WIN_COLOR,
                          {{Action::Retry, "Retry", false}, {Action::Levels, "Levels", true}}, stars);
     } else {
-        banner_.Show("OUT OF SHOTS", std::to_string(level_.targetsRemaining()) + " targets survived",
+        dialog_.Show("OUT OF SHOTS", std::to_string(level_.targetsRemaining()) + " targets survived",
                      LOSE_COLOR, {{Action::Retry, "Retry", true}, {Action::Levels, "Levels", false}});
     }
 }
 
-void PlayScene::HandleBanner(ui::ResultBanner::Action action) {
-    using Action = ui::ResultBanner::Action;
+void PlayScene::HandleChoice(ui::ChoiceDialog::Action action) {
+    using Action = ui::ChoiceDialog::Action;
     if (action != Action::None) context_.sound.Play(audio::Sfx::Click);
 
     switch (action) {
@@ -152,7 +199,10 @@ void PlayScene::HandleBanner(ui::ResultBanner::Action action) {
         context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_ + 1));
         break;
     case Action::Levels:
-        context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
+        LeaveToLevels();
+        break;
+    case Action::Resume:
+        Resume();
         break;
     case Action::None:
         break;
@@ -207,5 +257,5 @@ void PlayScene::Draw() const {
 
     levelsButton_.Draw(theme);
     DrawHud();
-    banner_.Draw(theme);
+    dialog_.Draw(theme);
 }

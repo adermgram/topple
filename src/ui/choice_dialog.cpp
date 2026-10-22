@@ -1,4 +1,4 @@
-#include "ui/result_banner.h"
+#include "ui/choice_dialog.h"
 #include "config.h"
 #include "game/rating.h"
 #include "ui/star.h"
@@ -37,7 +37,7 @@ float EaseOutBack(float t) {
 
 }  // namespace
 
-void ResultBanner::Show(std::string title, std::string subtitle, Color accent,
+void ChoiceDialog::Show(std::string title, std::string subtitle, Color accent,
                         const std::vector<Choice>& choices, int stars) {
     title_ = std::move(title);
     subtitle_ = std::move(subtitle);
@@ -59,7 +59,7 @@ void ResultBanner::Show(std::string title, std::string subtitle, Color accent,
     }
 }
 
-ResultBanner::Action ResultBanner::Update(float dt) {
+ChoiceDialog::Action ChoiceDialog::Update(float dt) {
     if (!visible_) return Action::None;
     shown_ += dt;
     appear_ = std::min(1.0f, appear_ + dt / FADE_SECONDS);
@@ -70,7 +70,7 @@ ResultBanner::Action ResultBanner::Update(float dt) {
     return chosen;
 }
 
-void ResultBanner::Draw(const Theme& theme) const {
+void ChoiceDialog::Draw(const Theme& theme) const {
     if (!visible_) return;
     const Palette& p = theme.palette();
 

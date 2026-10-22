@@ -14,7 +14,8 @@ Drag the ball back in the slingshot, release, and knock down every target before
 | Aim and fire | Press the ball with the mouse, drag back, release |
 | Cancel a shot | Release the ball close to the sling |
 | Split a Splitter ball | Click again while it is in the air |
-| Back to level select | `Esc` or the Levels button |
+| Pause (Resume, Retry, Levels) | `Esc` |
+| Back to level select | The Levels button, or `Esc` once the round is over |
 | Mute or unmute sound | `M` |
 
 - Pick a level on the level select screen. Each level gives you a limited number of shots (4 to 6).
@@ -53,7 +54,7 @@ src/
   audio/    SoundBank (plays effects) and synth (generates them from oscillators and noise)
   physics/  Box2D wrapper: pixels <-> metres, fixed time step, collision impacts
   game/     Level, LevelDef + levels.cpp (level data), Progress (saved stars), rating, Block (+ BlockKind materials), Ball (+ BallKind), Target, Slingshot, Effects
-  ui/       Theme (palette, fonts), Button, ResultBanner (choice buttons, stars), star drawing
+  ui/       Theme (palette, fonts), Button, ChoiceDialog (choice buttons, stars), star drawing
   scenes/   MenuScene, LevelSelectScene, PlayScene (the rules: shots, win and lose)
 resources/
   fonts/    Poppins

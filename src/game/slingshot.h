@@ -27,6 +27,9 @@ public:
     // Which kind of ball is loaded: it is drawn in the sling and sets the trajectory's end
     void set_ball(BallKind kind) { ball_ = kind; }
 
+    // Puts a half-pulled ball back, as if the player had let go too close to the sling
+    void Cancel();
+
     // A disabled sling shows no ball and can't be grabbed (out of shots, round over)
     void set_enabled(bool enabled) { enabled_ = enabled; }
 
