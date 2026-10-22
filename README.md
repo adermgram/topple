@@ -34,9 +34,11 @@ Every level hands you its own sequence of balls. They are shown at the top right
 
 ## Build
 
-You need CMake 3.15 or newer and a C++17 compiler. raylib and Box2D are downloaded on the first configure.
+You need Git, CMake 3.15 or newer and a C++17 compiler. raylib and Box2D are downloaded on the first configure, so there are no submodules to fetch.
 
 ```
+git clone https://github.com/adermgram/topple.git
+cd topple
 cmake --preset default
 cmake --build build
 cmake --build build --target run
