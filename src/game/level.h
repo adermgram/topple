@@ -14,6 +14,7 @@ namespace game {
 // What happened during one Update, for the owner to react to (sounds, rules, ...)
 struct LevelEvents {
     int targetsDestroyed = 0;
+    int glassShattered = 0;
     float strongestImpact = 0.0f;   // hardest collision this update; small values are just resting contact
 };
 
@@ -38,6 +39,7 @@ private:
     void Build(const LevelDef& def);
     void ApplyImpacts();
     int RemoveDestroyedTargets();   // returns how many were removed
+    int RemoveDestroyedBlocks();    // broken glass; returns how many
 
     // Declared first: blocks, targets and balls hold pointers into the world
     physics::World world_;
@@ -46,6 +48,7 @@ private:
     std::vector<Ball> balls_;
     Effects effects_;
     int shots_;
+    float age_ = 0.0f;   // seconds since the level loaded
 };
 
 }  // namespace game

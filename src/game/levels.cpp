@@ -22,21 +22,24 @@ public:
         def_.shots = shots;
     }
 
-    // Two pillars with a roof plank across them
-    float AddTower(float centerX, float baseY, float pillarHeight, float spread) {
-        float pillarY = baseY - GAP - pillarHeight / 2;
-        for (float side : {-1.0f, 1.0f})
-            AddBlock(BlockKind::Plank, {centerX + side * spread / 2, pillarY}, {PILLAR_W, pillarHeight});
+    // A box of any material standing on baseY
+    float AddBox(BlockKind kind, float centerX, float baseY, float width, float height) {
+        float y = baseY - GAP - height / 2;
+        def_.blocks.push_back({kind, {centerX, y}, {width, height}});
+        return y - height / 2;
+    }
 
-        float roofY = baseY - GAP - pillarHeight - GAP - PLANK_T / 2;
-        AddBlock(BlockKind::Plank, {centerX, roofY}, {spread + PILLAR_W * 2, PLANK_T});
-        return roofY - PLANK_T / 2;
+    // Two pillars with a roof plank across them
+    float AddTower(float centerX, float baseY, float pillarHeight, float spread,
+                   BlockKind pillars = BlockKind::Plank, BlockKind roof = BlockKind::Plank) {
+        float pillarTop = baseY;
+        for (float side : {-1.0f, 1.0f})
+            pillarTop = AddBox(pillars, centerX + side * spread / 2, baseY, PILLAR_W, pillarHeight);
+        return AddBox(roof, centerX, pillarTop, spread + PILLAR_W * 2, PLANK_T);
     }
 
     float AddCrate(float centerX, float baseY, float size = CRATE_SIZE) {
-        float y = baseY - GAP - size / 2;
-        AddBlock(BlockKind::Crate, {centerX, y}, {size, size});
-        return y - size / 2;
+        return AddBox(BlockKind::Crate, centerX, baseY, size, size);
     }
 
     void AddTarget(float centerX, float baseY) {
@@ -46,10 +49,6 @@ public:
     LevelDef Done() { return std::move(def_); }
 
 private:
-    void AddBlock(BlockKind kind, Vector2 center, Vector2 size) {
-        def_.blocks.push_back({kind, center, size});
-    }
-
     LevelDef def_;
 };
 
@@ -115,10 +114,51 @@ LevelDef TwoStories() {
     return b.Done();
 }
 
+// Glass breaks on a hard hit, so a crate resting on a glass roof drops onto the target below
+LevelDef GlassHouse() {
+    Builder b("Glass House", 5);
+    float roofA = b.AddTower(870, GROUND_TOP, 90, 90, BlockKind::Glass, BlockKind::Glass);
+    b.AddTarget(870, GROUND_TOP);
+    b.AddCrate(870, roofA);
+
+    float roofB = b.AddTower(1050, GROUND_TOP, 120, 90, BlockKind::Glass, BlockKind::Plank);
+    b.AddTarget(1050, GROUND_TOP);
+    b.AddTarget(1050, roofB);
+    return b.Done();
+}
+
+// A stone wall can't be broken or pushed: lob the ball over it
+LevelDef StoneWall() {
+    Builder b("Stone Wall", 5);
+    float wall = GROUND_TOP;
+    for (int i = 0; i < 2; i++) wall = b.AddBox(BlockKind::Stone, 860, wall, 44, 70);
+
+    float roof = b.AddTower(1030, GROUND_TOP, 90, 80, BlockKind::Plank, BlockKind::Glass);
+    b.AddTarget(1030, GROUND_TOP);
+    b.AddCrate(1030, roof);
+
+    float crate = b.AddCrate(1170, GROUND_TOP, 40);
+    b.AddTarget(1170, crate);
+    return b.Done();
+}
+
+// Heavy stone slabs rest on glass pillars: break the glass and the stone comes down
+LevelDef Crusher() {
+    Builder b("Crusher", 5);
+    b.AddTower(900, GROUND_TOP, 100, 90, BlockKind::Glass, BlockKind::Stone);
+    b.AddTarget(900, GROUND_TOP);
+
+    float roofB = b.AddTower(1100, GROUND_TOP, 130, 90, BlockKind::Glass, BlockKind::Stone);
+    b.AddTarget(1100, GROUND_TOP);
+    b.AddTarget(1100, roofB);
+    return b.Done();
+}
+
 }  // namespace
 
 const std::vector<LevelDef>& Levels() {
-    static const std::vector<LevelDef> levels = {WarmUp(), TwinTowers(), HighGround(), Fortress(), TwoStories()};
+    static const std::vector<LevelDef> levels = {WarmUp(),    TwinTowers(), HighGround(), Fortress(),
+                                                 TwoStories(), GlassHouse(), StoneWall(),  Crusher()};
     return levels;
 }
 

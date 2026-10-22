@@ -13,6 +13,7 @@ Samples Generate(Sfx sfx) {
     case Sfx::Launch: return MakeLaunch();
     case Sfx::Hit:    return MakeHit();
     case Sfx::Pop:    return MakePop();
+    case Sfx::Shatter: return MakeShatter();
     case Sfx::Win:    return MakeWin();
     case Sfx::Lose:   return MakeLose();
     case Sfx::Count:  break;

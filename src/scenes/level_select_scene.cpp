@@ -12,10 +12,10 @@
 namespace {
 
 constexpr int COLUMNS = 5;
-constexpr float CARD_SIZE = 140.0f;
-constexpr float CARD_GAP_X = 36.0f;
-constexpr float CARD_GAP_Y = 100.0f;  // room for the stars and the name under each card
-constexpr float GRID_TOP = 230.0f;
+constexpr float CARD_SIZE = 120.0f;
+constexpr float CARD_GAP_X = 40.0f;
+constexpr float CARD_GAP_Y = 84.0f;   // room for the stars and the name under each card
+constexpr float GRID_TOP = 205.0f;
 constexpr float STAR_RADIUS = 10.0f;
 constexpr float STAR_SPACING = 26.0f;
 
@@ -29,7 +29,7 @@ Rectangle CardBounds(size_t index, size_t total) {
     return {x, y, CARD_SIZE, CARD_SIZE};
 }
 
-Rectangle BackBounds() { return {(config::SCREEN_W - 200.0f) / 2, config::SCREEN_H - 120.0f, 200.0f, 56.0f}; }
+Rectangle BackBounds() { return {(config::SCREEN_W - 200.0f) / 2, config::SCREEN_H - 96.0f, 200.0f, 56.0f}; }
 
 }  // namespace
 
@@ -37,7 +37,7 @@ LevelSelectScene::LevelSelectScene(AppContext& context)
     : context_(context), backButton_("Back", BackBounds()) {
     const auto& levels = game::Levels();
     for (size_t i = 0; i < levels.size(); i++)
-        levelButtons_.emplace_back(std::to_string(i + 1), CardBounds(i, levels.size()), false, 52.0f);
+        levelButtons_.emplace_back(std::to_string(i + 1), CardBounds(i, levels.size()), false, 46.0f);
 }
 
 void LevelSelectScene::Update(float dt) {

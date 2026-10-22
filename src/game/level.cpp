@@ -12,11 +12,11 @@ constexpr float GROUND_WIDTH = 6000.0f;   // far wider than the screen so nothin
 constexpr float WALL_THICKNESS = 200.0f;  // thick, so fast objects can't tunnel through
 constexpr float WALL_HEIGHT = 4000.0f;
 
-const Color GROUND_COLOR{58, 68, 98, 255};
-const Color PLANK_COLOR{170, 118, 70, 255};
-const Color CRATE_COLOR{196, 138, 82, 255};
+const Color GLASS_SHARD_COLOR{190, 235, 250, 255};
 
-Color ColorFor(BlockKind kind) { return kind == BlockKind::Plank ? PLANK_COLOR : CRATE_COLOR; }
+// Structures start a few pixels above what they rest on and drop into place. For this long
+// after loading, the landing counts as nothing: no damage, no sounds.
+constexpr float SETTLE_GRACE_SECONDS = 0.6f;
 
 }  // namespace
 
@@ -27,7 +27,7 @@ void Level::Build(const LevelDef& def) {
     using layout::GROUND_TOP;
 
     blocks_.emplace_back(world_, Vector2{config::SCREEN_W / 2.0f, GROUND_TOP + GROUND_HEIGHT / 2},
-                         Vector2{GROUND_WIDTH, GROUND_HEIGHT}, BodyType::Static, GROUND_COLOR);
+                         Vector2{GROUND_WIDTH, GROUND_HEIGHT}, BodyType::Static, BlockKind::Terrain);
 
     // Invisible walls just outside the screen keep targets (and balls) in the playfield:
     // a hit target that rolls away could otherwise leave a level that can never be won
@@ -35,11 +35,11 @@ void Level::Build(const LevelDef& def) {
     for (float edge : {0.0f, (float)config::SCREEN_W}) {
         float side = (edge == 0.0f) ? -1.0f : 1.0f;
         blocks_.emplace_back(world_, Vector2{edge + side * WALL_THICKNESS / 2, wallY},
-                             Vector2{WALL_THICKNESS, WALL_HEIGHT}, BodyType::Static, GROUND_COLOR);
+                             Vector2{WALL_THICKNESS, WALL_HEIGHT}, BodyType::Static, BlockKind::Terrain);
     }
 
     for (const BlockSpec& block : def.blocks)
-        blocks_.emplace_back(world_, block.center, block.size, BodyType::Dynamic, ColorFor(block.kind));
+        blocks_.emplace_back(world_, block.center, block.size, BodyType::Dynamic, block.kind);
     for (const Vector2& target : def.targets)
         targets_.emplace_back(world_, target);
 }
@@ -53,21 +53,30 @@ LevelEvents Level::Update(float dt) {
     LevelEvents events;
 
     world_.Update(dt);
-    for (const physics::Impact& impact : world_.impacts())
-        events.strongestImpact = std::max(events.strongestImpact, impact.impulse);
-    ApplyImpacts();
+    age_ += dt;
+
+    if (age_ >= SETTLE_GRACE_SECONDS) {
+        for (const physics::Impact& impact : world_.impacts())
+            events.strongestImpact = std::max(events.strongestImpact, impact.impulse);
+        ApplyImpacts();
+    }
 
     for (Target& target : targets_) target.Update(dt);
     events.targetsDestroyed = RemoveDestroyedTargets();
+    events.glassShattered = RemoveDestroyedBlocks();
     effects_.Update(dt);
     return events;
 }
 
 void Level::ApplyImpacts() {
-    for (const physics::Impact& impact : world_.impacts())
+    for (const physics::Impact& impact : world_.impacts()) {
         for (Target& target : targets_)
             if (target.body() == impact.a || target.body() == impact.b)
                 target.ApplyImpact(impact.impulse);
+        for (Block& block : blocks_)
+            if (block.breakable() && (block.body() == impact.a || block.body() == impact.b))
+                block.ApplyImpact(impact.impulse);
+    }
 }
 
 int Level::RemoveDestroyedTargets() {
@@ -80,6 +89,21 @@ int Level::RemoveDestroyedTargets() {
         effects_.Burst(it->position(), Target::COLOR, 16);
         world_.DestroyBody(it->body());
         it = targets_.erase(it);
+        removed++;
+    }
+    return removed;
+}
+
+int Level::RemoveDestroyedBlocks() {
+    int removed = 0;
+    for (auto it = blocks_.begin(); it != blocks_.end();) {
+        if (!it->destroyed()) {
+            ++it;
+            continue;
+        }
+        effects_.Burst(it->position(), GLASS_SHARD_COLOR, 18);
+        world_.DestroyBody(it->body());
+        it = blocks_.erase(it);
         removed++;
     }
     return removed;

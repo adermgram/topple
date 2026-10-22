@@ -77,6 +77,18 @@ void AddStrike(Buffer& out, float baseFreq, float gain, float decayScale) {
     }
 }
 
+// A short ring: a sine that starts at `start` and fades away. Several at different pitches
+// and start times make the tinkle of falling glass.
+void AddPing(Buffer& out, float start, float freq, float gain, float decay) {
+    std::size_t first = (std::size_t)(start * SAMPLE_RATE);
+    for (std::size_t i = first; i < out.size(); i++) {
+        float t = TimeOf(i - first);
+        float envelope = std::exp(-decay * t);
+        if (envelope < 0.002f) break;
+        out[i] += gain * envelope * std::sin(TWO_PI * freq * t);
+    }
+}
+
 // Scales to an exact peak, then fades in over 0.2 ms (the onset stays sharp) and out over
 // 20 ms, so a sound that doesn't start or end exactly at zero can't click
 Samples ToPcm(const Buffer& in, float peak) {
@@ -173,6 +185,31 @@ Samples MakePop() {
         b[i] = 1.4f * poof + 0.45f * squeak + 0.3f * click;
     }
     return ToPcm(b, 0.75f);
+}
+
+// A crack and a hiss of high noise, then pieces tinkling at scattered pitches
+Samples MakeShatter() {
+    Buffer b = Silence(0.5f);
+    Noise noise;
+    LowPass split(3500.0f);   // noise minus its low part leaves the bright, glassy hiss
+
+    for (std::size_t i = 0; i < b.size(); i++) {
+        float t = TimeOf(i);
+        float raw = noise.Next();
+        float hiss = (raw - split.Process(raw)) * std::exp(-14.0f * t);
+        float crack = noise.Next() * std::exp(-500.0f * t);
+        b[i] += 0.9f * hiss + 0.7f * crack;
+    }
+
+    struct Ping {
+        float start, freq, gain, decay;
+    };
+    constexpr Ping PINGS[] = {{0.000f, 3150.0f, 0.50f, 38.0f}, {0.012f, 4200.0f, 0.40f, 45.0f},
+                              {0.028f, 2650.0f, 0.45f, 34.0f}, {0.045f, 5300.0f, 0.30f, 55.0f},
+                              {0.070f, 3700.0f, 0.35f, 40.0f}, {0.100f, 4800.0f, 0.25f, 50.0f},
+                              {0.140f, 6100.0f, 0.20f, 60.0f}};
+    for (const Ping& p : PINGS) AddPing(b, p.start, p.freq, p.gain, p.decay);
+    return ToPcm(b, 0.8f);
 }
 
 // C major arpeggio, the last note held

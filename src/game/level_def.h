@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include "game/block_kind.h"
 #include "raylib.h"
 #include <string>
 #include <vector>
@@ -13,8 +14,6 @@ constexpr float GROUND_HEIGHT = 80.0f;
 constexpr float GROUND_TOP = config::SCREEN_H - GROUND_HEIGHT;
 constexpr Vector2 SLING_ANCHOR{230.0f, GROUND_TOP - 190.0f};
 }  // namespace layout
-
-enum class BlockKind { Plank, Crate };
 
 struct BlockSpec {
     BlockKind kind;
@@ -30,7 +29,7 @@ struct LevelDef {
     std::vector<Vector2> targets;   // centres, px
 };
 
-// Every level, in play order
+// Every level, in play order. New levels go at the end: saved stars are stored by position.
 const std::vector<LevelDef>& Levels();
 
 }  // namespace game

@@ -53,6 +53,7 @@ void PlayScene::PlaySounds(const game::LevelEvents& events, float dt) {
     if (hitCooldown_ <= 0.0f) lastHitImpact_ = 0.0f;
 
     if (events.targetsDestroyed > 0) context_.sound.PlayVaried(audio::Sfx::Pop);
+    if (events.glassShattered > 0) context_.sound.PlayVaried(audio::Sfx::Shatter);
 
     const float impact = events.strongestImpact;
     const bool coolingDown = hitCooldown_ > 0.0f;
