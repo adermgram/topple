@@ -1,6 +1,7 @@
 #include "game/level.h"
 #include "config.h"
 #include <algorithm>
+#include <cmath>
 
 using physics::BodyType;
 
@@ -18,9 +19,13 @@ const Color GLASS_SHARD_COLOR{190, 235, 250, 255};
 // after loading, the landing counts as nothing: no damage, no sounds.
 constexpr float SETTLE_GRACE_SECONDS = 0.6f;
 
+constexpr float MIN_SPLIT_SPEED = 60.0f;        // px/s
+constexpr float SPLIT_SPREAD_RADIANS = 0.2f;    // about 11.5 degrees either side
+constexpr float FRAGMENT_SPACING = 20.0f;       // px, more than a fragment's diameter
+
 }  // namespace
 
-Level::Level(const LevelDef& def) : shots_(def.shots) { Build(def); }
+Level::Level(const LevelDef& def) : ammo_(def.ammo) { Build(def); }
 
 void Level::Build(const LevelDef& def) {
     using layout::GROUND_HEIGHT;
@@ -44,9 +49,45 @@ void Level::Build(const LevelDef& def) {
         targets_.emplace_back(world_, target);
 }
 
-void Level::Fire(Vector2 from, Vector2 velocityPxPerSec) {
-    balls_.emplace_back(world_, from);
+void Level::Fire(Vector2 from, Vector2 velocityPxPerSec, BallKind kind) {
+    balls_.emplace_back(world_, from, kind);
     balls_.back().Launch(velocityPxPerSec);
+}
+
+// A Splitter that has slowed to a crawl is just lying there: nothing left to split
+const Ball* Level::FindSplittable() const {
+    for (const Ball& ball : balls_) {
+        if (ball.kind() != BallKind::Splitter) continue;
+        Vector2 v = ball.velocity();
+        if (v.x * v.x + v.y * v.y >= MIN_SPLIT_SPEED * MIN_SPLIT_SPEED) return &ball;
+    }
+    return nullptr;
+}
+
+bool Level::CanTriggerAbility() const { return FindSplittable() != nullptr; }
+
+bool Level::TriggerAbility() {
+    const Ball* ball = FindSplittable();
+    if (!ball) return false;
+
+    const Vector2 position = ball->position();
+    const Vector2 velocity = ball->velocity();
+    const float speed = std::sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+
+    world_.DestroyBody(ball->body());
+    balls_.erase(balls_.begin() + (ball - balls_.data()));
+
+    // Three pieces fan out around the old direction, side by side so they don't start overlapping
+    const float heading = std::atan2(velocity.y, velocity.x);
+    const Vector2 sideways = {-std::sin(heading), std::cos(heading)};
+    for (int i = -1; i <= 1; i++) {
+        float angle = heading + i * SPLIT_SPREAD_RADIANS;
+        Vector2 start = {position.x + sideways.x * i * FRAGMENT_SPACING,
+                         position.y + sideways.y * i * FRAGMENT_SPACING};
+        Fire(start, {std::cos(angle) * speed, std::sin(angle) * speed}, BallKind::Fragment);
+    }
+    effects_.Burst(position, Ball::ColorOf(BallKind::Splitter), 10);
+    return true;
 }
 
 LevelEvents Level::Update(float dt) {

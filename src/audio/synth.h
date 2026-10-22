@@ -16,6 +16,7 @@ Samples MakeLaunch();   // slingshot release
 Samples MakeHit();      // something hits something: a low thud
 Samples MakePop();      // a target is destroyed
 Samples MakeShatter();  // a glass block breaks
+Samples MakeSplit();    // a splitter ball divides in three
 Samples MakeWin();      // rising arpeggio
 Samples MakeLose();     // falling notes
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include "game/ball_kind.h"
 #include "game/block_kind.h"
 #include "raylib.h"
 #include <string>
@@ -24,7 +25,7 @@ struct BlockSpec {
 // A puzzle described as plain data. Level turns it into a physics world.
 struct LevelDef {
     std::string name;
-    int shots;
+    std::vector<BallKind> ammo;   // the balls you get, in firing order
     std::vector<BlockSpec> blocks;
     std::vector<Vector2> targets;   // centres, px
 };

@@ -13,13 +13,18 @@ constexpr float PLANK_T = 16.0f;
 constexpr float CRATE_SIZE = 36.0f;
 constexpr float GAP = 4.0f;   // pieces start slightly apart and settle into place
 
+// Short names for writing ammo lists
+constexpr BallKind S = BallKind::Standard;
+constexpr BallKind H = BallKind::Heavy;
+constexpr BallKind X = BallKind::Splitter;
+
 // Stacks pieces on a surface. Each Add* takes the y of the surface to stand on and
 // returns the y of the new top surface, so pieces can be piled on one another.
 class Builder {
 public:
-    Builder(std::string name, int shots) {
+    Builder(std::string name, std::vector<BallKind> ammo) {
         def_.name = std::move(name);
-        def_.shots = shots;
+        def_.ammo = std::move(ammo);
     }
 
     // A box of any material standing on baseY
@@ -53,7 +58,7 @@ private:
 };
 
 LevelDef WarmUp() {
-    Builder b("Warm Up", 4);
+    Builder b("Warm Up", {S, S, S, S});
     b.AddTarget(900, GROUND_TOP);
     float crate = b.AddCrate(1040, GROUND_TOP, 44);
     b.AddTarget(1040, crate);
@@ -61,7 +66,7 @@ LevelDef WarmUp() {
 }
 
 LevelDef TwinTowers() {
-    Builder b("Twin Towers", 5);
+    Builder b("Twin Towers", {S, S, S, S, S});
     float roofA = b.AddTower(880, GROUND_TOP, 80, 80);
     b.AddTarget(880, GROUND_TOP);
     b.AddCrate(880, roofA);
@@ -72,8 +77,9 @@ LevelDef TwinTowers() {
     return b.Done();
 }
 
+// Two separate structures: a splitter can reach both
 LevelDef HighGround() {
-    Builder b("High Ground", 5);
+    Builder b("High Ground", {S, S, X, S, S});
     float top = GROUND_TOP;
     for (int i = 0; i < 3; i++) top = b.AddCrate(800, top);
     b.AddTarget(800, top);
@@ -85,7 +91,7 @@ LevelDef HighGround() {
 }
 
 LevelDef Fortress() {
-    Builder b("Fortress", 6);
+    Builder b("Fortress", {S, H, S, S, H, S});
     float roofLeft = b.AddTower(840, GROUND_TOP, 80, 80);
     float roofMid = b.AddTower(990, GROUND_TOP, 110, 80);
     float roofRight = b.AddTower(1140, GROUND_TOP, 80, 80);
@@ -98,7 +104,7 @@ LevelDef Fortress() {
 }
 
 LevelDef TwoStories() {
-    Builder b("Two Stories", 6);
+    Builder b("Two Stories", {S, S, S, S, S, S});
     float floor1 = b.AddTower(1000, GROUND_TOP, 90, 120);
     b.AddTarget(1000, GROUND_TOP);
 
@@ -116,7 +122,7 @@ LevelDef TwoStories() {
 
 // Glass breaks on a hard hit, so a crate resting on a glass roof drops onto the target below
 LevelDef GlassHouse() {
-    Builder b("Glass House", 5);
+    Builder b("Glass House", {S, S, S, S, S});
     float roofA = b.AddTower(870, GROUND_TOP, 90, 90, BlockKind::Glass, BlockKind::Glass);
     b.AddTarget(870, GROUND_TOP);
     b.AddCrate(870, roofA);
@@ -129,7 +135,7 @@ LevelDef GlassHouse() {
 
 // A stone wall can't be broken or pushed: lob the ball over it
 LevelDef StoneWall() {
-    Builder b("Stone Wall", 5);
+    Builder b("Stone Wall", {S, H, S, H, S});
     float wall = GROUND_TOP;
     for (int i = 0; i < 2; i++) wall = b.AddBox(BlockKind::Stone, 860, wall, 44, 70);
 
@@ -144,7 +150,7 @@ LevelDef StoneWall() {
 
 // Heavy stone slabs rest on glass pillars: break the glass and the stone comes down
 LevelDef Crusher() {
-    Builder b("Crusher", 5);
+    Builder b("Crusher", {S, S, X, S, S});
     b.AddTower(900, GROUND_TOP, 100, 90, BlockKind::Glass, BlockKind::Stone);
     b.AddTarget(900, GROUND_TOP);
 
@@ -154,11 +160,43 @@ LevelDef Crusher() {
     return b.Done();
 }
 
+// Stone columns and a stone lid: only the heavy ball has the weight to topple them
+LevelDef IronFortress() {
+    Builder b("Iron Fortress", {H, H, S, H, S});
+    float top = GROUND_TOP;
+    b.AddBox(BlockKind::Stone, 880, GROUND_TOP, 36, 120);
+    top = b.AddBox(BlockKind::Stone, 980, GROUND_TOP, 36, 120);
+    float lid = b.AddBox(BlockKind::Stone, 930, top, 140, 16);
+    b.AddTarget(930, GROUND_TOP);
+    b.AddTarget(930, lid);
+
+    float crates = GROUND_TOP;
+    for (int i = 0; i < 3; i++) crates = b.AddCrate(1120, crates);
+    b.AddTarget(1120, crates);
+    return b.Done();
+}
+
+// Targets spread along the ground, each behind its own cover: one splitter can fan out over all of them
+LevelDef Spread() {
+    Builder b("Spread", {X, X, X, S, S});
+    b.AddTarget(800, GROUND_TOP);
+
+    float crate = b.AddCrate(900, GROUND_TOP);
+    b.AddTarget(900, crate);
+
+    b.AddTower(1030, GROUND_TOP, 90, 70);
+    b.AddTarget(1030, GROUND_TOP);
+
+    float crateB = b.AddCrate(1160, GROUND_TOP, 40);
+    b.AddTarget(1160, crateB);
+    return b.Done();
+}
+
 }  // namespace
 
 const std::vector<LevelDef>& Levels() {
-    static const std::vector<LevelDef> levels = {WarmUp(),    TwinTowers(), HighGround(), Fortress(),
-                                                 TwoStories(), GlassHouse(), StoneWall(),  Crusher()};
+    static const std::vector<LevelDef> levels = {WarmUp(),      TwinTowers(), HighGround(), Fortress(),    TwoStories(),
+                                                 GlassHouse(),  StoneWall(),  Crusher(),    IronFortress(), Spread()};
     return levels;
 }
 

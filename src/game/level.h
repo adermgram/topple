@@ -27,9 +27,15 @@ public:
     LevelEvents Update(float dt);
     void Draw() const;
 
-    void Fire(Vector2 from, Vector2 velocityPxPerSec);
+    void Fire(Vector2 from, Vector2 velocityPxPerSec, BallKind kind);
 
-    int shots() const { return shots_; }
+    // Splits a moving Splitter ball into three pieces. Returns false if there is none to split.
+    bool TriggerAbility();
+    // True while a Splitter is flying and could still be split (for the on-screen prompt)
+    bool CanTriggerAbility() const;
+
+    int shots() const { return (int)ammo_.size(); }
+    BallKind ammo(int index) const { return ammo_.at(index); }
     int targetsRemaining() const { return (int)targets_.size(); }
     bool IsSettled() const { return world_.AllAsleep(); }
     Vector2 slingAnchor() const { return layout::SLING_ANCHOR; }
@@ -40,6 +46,7 @@ private:
     void ApplyImpacts();
     int RemoveDestroyedTargets();   // returns how many were removed
     int RemoveDestroyedBlocks();    // broken glass; returns how many
+    const Ball* FindSplittable() const;
 
     // Declared first: blocks, targets and balls hold pointers into the world
     physics::World world_;
@@ -47,7 +54,7 @@ private:
     std::vector<Target> targets_;
     std::vector<Ball> balls_;
     Effects effects_;
-    int shots_;
+    std::vector<BallKind> ammo_;
     float age_ = 0.0f;   // seconds since the level loaded
 };
 

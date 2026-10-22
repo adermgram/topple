@@ -5,7 +5,7 @@
 
 namespace audio {
 
-enum class Sfx { Click, Launch, Hit, Pop, Shatter, Win, Lose, Count };
+enum class Sfx { Click, Launch, Hit, Pop, Shatter, Split, Win, Lose, Count };
 
 // Builds every sound effect once at startup and plays them on request.
 // Needs the audio device to be open (see App). If there is no audio device the

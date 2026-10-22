@@ -41,8 +41,13 @@ bool PlayScene::HasNextLevel() const {
     return levelIndex_ + 1 < (int)game::Levels().size();
 }
 
+// The ball that sits in the sling next (only meaningful while shots are left)
+game::BallKind PlayScene::NextBall() const {
+    return level_.ammo(level_.shots() - shotsLeft_);
+}
+
 void PlayScene::Fire(const game::Slingshot::Launch& launch) {
-    level_.Fire(launch.position, launch.velocity);
+    level_.Fire(launch.position, launch.velocity, NextBall());
     context_.sound.Play(audio::Sfx::Launch);
     shotsLeft_--;
     sinceLastShot_ = 0.0f;
@@ -78,7 +83,15 @@ void PlayScene::Update(float dt) {
 
     if (phase_ == Phase::Playing) {
         slingshot_.set_enabled(shotsLeft_ > 0);
-        if (auto launch = slingshot_.Update(dt, ReadPointer())) Fire(*launch);
+        if (shotsLeft_ > 0) slingshot_.set_ball(NextBall());
+
+        // A click while a splitter is in the air splits it, instead of grabbing the sling
+        Pointer pointer = ReadPointer();
+        if (pointer.pressed && level_.TriggerAbility()) {
+            context_.sound.Play(audio::Sfx::Split);
+            pointer.pressed = false;
+        }
+        if (auto launch = slingshot_.Update(dt, pointer)) Fire(*launch);
         SetMouseCursor(slingshot_.WantsPointer() ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 
@@ -150,11 +163,16 @@ void PlayScene::DrawHud() const {
     const ui::Theme& theme = context_.theme;
     const ui::Palette& p = theme.palette();
 
-    // One ball icon per shot, dimmed once used
-    for (int i = 0; i < level_.shots(); i++) {
-        Vector2 pos = {config::SCREEN_W - 36.0f - i * 34.0f, 42.0f};
-        if (i < shotsLeft_) DrawCircleV(pos, 11.0f, game::Ball::COLOR);
-        else DrawCircleLinesV(pos, 11.0f, Fade(p.textDim, 0.5f));
+    // The ammo queue, first ball on the left: each icon shows its kind, used ones are dimmed
+    const int total = level_.shots();
+    const int used = total - shotsLeft_;
+    for (int i = 0; i < total; i++) {
+        game::BallKind kind = level_.ammo(i);
+        Vector2 pos = {config::SCREEN_W - 36.0f - (total - 1 - i) * 34.0f, 42.0f};
+        float radius = std::clamp(game::Ball::RadiusOf(kind) * 0.7f, 8.0f, 13.0f);
+        if (i < used) DrawCircleLinesV(pos, radius, Fade(p.textDim, 0.5f));
+        else DrawCircleV(pos, radius, game::Ball::ColorOf(kind));
+        if (i == used && phase_ == Phase::Playing) DrawCircleLinesV(pos, radius + 4.0f, p.text);   // up next
     }
     theme.DrawText("Targets left: " + std::to_string(level_.targetsRemaining()),
                    {config::SCREEN_W - 20.0f, 70}, 22, p.textDim, ui::Align::Right);
@@ -162,9 +180,22 @@ void PlayScene::DrawHud() const {
     const float cx = config::SCREEN_W / 2.0f;
     theme.DrawText("Level " + std::to_string(levelIndex_ + 1) + ": " + game::Levels()[levelIndex_].name,
                    {cx, 22}, 26, p.text, ui::Align::Center, ui::FontWeight::SemiBold);
-    if (levelIndex_ == 0 && shotsLeft_ == level_.shots() && phase_ == Phase::Playing)
+
+    if (phase_ != Phase::Playing) return;
+
+    if (level_.CanTriggerAbility())
+        theme.DrawText("Click to split!", {cx, 60}, 22, p.accent, ui::Align::Center, ui::FontWeight::SemiBold);
+    else if (levelIndex_ == 0 && shotsLeft_ == level_.shots())
         theme.DrawText("Drag the ball back and release to fire", {cx, 60}, 20, p.textDim,
                        ui::Align::Center);
+
+    // Name the ball waiting in the sling when it isn't the plain one
+    if (shotsLeft_ > 0 && NextBall() != game::BallKind::Standard) {
+        Vector2 anchor = level_.slingAnchor();
+        std::string label = game::Ball::NameOf(NextBall());
+        if (NextBall() == game::BallKind::Splitter) label += " (click again in flight)";
+        theme.DrawText(label, {anchor.x, anchor.y - 62.0f}, 20, p.textDim, ui::Align::Center);
+    }
 }
 
 void PlayScene::Draw() const {

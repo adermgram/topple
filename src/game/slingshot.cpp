@@ -89,7 +89,7 @@ void Slingshot::DrawTrajectory() const {
     for (int i = 1; i <= dots; i++) {
         float t = i * TRAJECTORY_DOT_EVERY;
         Vector2 p = {pull_.x + v.x * t, pull_.y + v.y * t + 0.5f * g * t * (t + dt)};
-        if (p.y > groundY_ - Ball::RADIUS) break;   // the ball's centre stops a radius above the ground
+        if (p.y > groundY_ - Ball::RadiusOf(ball_)) break;   // the ball's centre stops a radius above the ground
         float fade = 1.0f - (float)i / (dots + 1);
         DrawCircleV(p, 4.0f * (0.5f + 0.5f * fade), Fade(RAYWHITE, 0.15f + 0.65f * fade));
     }
@@ -105,12 +105,12 @@ void Slingshot::Draw() const {
     switch (state_) {
     case State::Ready:
         DrawBand(anchor_);
-        if (enabled_) Ball::DrawAt(anchor_, 0.0f);
+        if (enabled_) Ball::DrawAt(anchor_, 0.0f, ball_);
         break;
     case State::Dragging:
         if (Vector2Distance(pull_, anchor_) >= MIN_PULL) DrawTrajectory();
         DrawBand(pull_);
-        Ball::DrawAt(pull_, 0.0f);
+        Ball::DrawAt(pull_, 0.0f, ball_);
         break;
     case State::Reloading:
         DrawBand(anchor_);   // relaxed band, no ball yet

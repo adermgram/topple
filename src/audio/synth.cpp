@@ -89,6 +89,19 @@ void AddPing(Buffer& out, float start, float freq, float gain, float decay) {
     }
 }
 
+// A quick rising "pew": the pitch glides from f0 up toward f1 while the sound dies away
+void AddChirp(Buffer& out, float start, float f0, float f1, float gain, float decay) {
+    std::size_t first = (std::size_t)(start * SAMPLE_RATE);
+    float phase = 0.0f;
+    for (std::size_t i = first; i < out.size(); i++) {
+        float t = TimeOf(i - first);
+        float envelope = std::exp(-decay * t);
+        if (envelope < 0.002f) break;
+        phase += TWO_PI * (f0 + (f1 - f0) * (1.0f - std::exp(-35.0f * t))) / SAMPLE_RATE;
+        out[i] += gain * envelope * std::sin(phase);
+    }
+}
+
 // Scales to an exact peak, then fades in over 0.2 ms (the onset stays sharp) and out over
 // 20 ms, so a sound that doesn't start or end exactly at zero can't click
 Samples ToPcm(const Buffer& in, float peak) {
@@ -210,6 +223,18 @@ Samples MakeShatter() {
                               {0.140f, 6100.0f, 0.20f, 60.0f}};
     for (const Ping& p : PINGS) AddPing(b, p.start, p.freq, p.gain, p.decay);
     return ToPcm(b, 0.8f);
+}
+
+// Three overlapping chirps, one per new ball, over a small burst of noise
+Samples MakeSplit() {
+    Buffer b = Silence(0.25f);
+    Noise noise;
+    for (std::size_t i = 0; i < b.size(); i++) b[i] = 0.25f * noise.Next() * std::exp(-300.0f * TimeOf(i));
+
+    AddChirp(b, 0.000f, 520.0f, 1500.0f, 0.60f, 22.0f);
+    AddChirp(b, 0.035f, 600.0f, 1750.0f, 0.50f, 22.0f);
+    AddChirp(b, 0.070f, 700.0f, 2000.0f, 0.40f, 22.0f);
+    return ToPcm(b, 0.6f);
 }
 
 // C major arpeggio, the last note held

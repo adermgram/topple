@@ -19,6 +19,7 @@ public:
 private:
     enum class Phase { Playing, Won, Lost };
 
+    game::BallKind NextBall() const;
     void Fire(const game::Slingshot::Launch& launch);
     void PlaySounds(const game::LevelEvents& events, float dt);
     void UpdateRules(float dt);

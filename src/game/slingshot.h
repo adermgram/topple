@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/pointer.h"
+#include "game/ball_kind.h"
 #include "raylib.h"
 #include <optional>
 
@@ -23,6 +24,9 @@ public:
     std::optional<Launch> Update(float dt, const Pointer& pointer);
     void Draw() const;
 
+    // Which kind of ball is loaded: it is drawn in the sling and sets the trajectory's end
+    void set_ball(BallKind kind) { ball_ = kind; }
+
     // A disabled sling shows no ball and can't be grabbed (out of shots, round over)
     void set_enabled(bool enabled) { enabled_ = enabled; }
 
@@ -40,6 +44,7 @@ private:
     float groundY_;
     State state_ = State::Ready;
     bool enabled_ = true;
+    BallKind ball_ = BallKind::Standard;
     Vector2 pull_;           // ball position while dragging
     float reloadTimer_ = 0.0f;
     bool hot_ = false;
