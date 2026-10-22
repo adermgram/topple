@@ -8,7 +8,9 @@ namespace game {
 
 namespace {
 
-constexpr float GROUND_WIDTH = 6000.0f;   // far wider than the screen so balls can't fall off the edge
+constexpr float GROUND_WIDTH = 6000.0f;   // far wider than the screen so nothing can fall off the edge
+constexpr float WALL_THICKNESS = 200.0f;  // thick, so fast objects can't tunnel through
+constexpr float WALL_HEIGHT = 4000.0f;
 
 const Color GROUND_COLOR{58, 68, 98, 255};
 const Color PLANK_COLOR{170, 118, 70, 255};
@@ -26,6 +28,15 @@ void Level::Build(const LevelDef& def) {
 
     blocks_.emplace_back(world_, Vector2{config::SCREEN_W / 2.0f, GROUND_TOP + GROUND_HEIGHT / 2},
                          Vector2{GROUND_WIDTH, GROUND_HEIGHT}, BodyType::Static, GROUND_COLOR);
+
+    // Invisible walls just outside the screen keep targets (and balls) in the playfield:
+    // a hit target that rolls away could otherwise leave a level that can never be won
+    const float wallY = GROUND_TOP - WALL_HEIGHT / 2;
+    for (float edge : {0.0f, (float)config::SCREEN_W}) {
+        float side = (edge == 0.0f) ? -1.0f : 1.0f;
+        blocks_.emplace_back(world_, Vector2{edge + side * WALL_THICKNESS / 2, wallY},
+                             Vector2{WALL_THICKNESS, WALL_HEIGHT}, BodyType::Static, GROUND_COLOR);
+    }
 
     for (const BlockSpec& block : def.blocks)
         blocks_.emplace_back(world_, block.center, block.size, BodyType::Dynamic, ColorFor(block.kind));
