@@ -7,6 +7,16 @@ Drag the ball back in the slingshot, release, and knock down every target before
 ![Main menu](docs/images/menu.png)
 ![Aiming a shot, with the dotted flight preview](docs/images/gameplay.png)
 
+## Download
+
+Prebuilt versions for Windows, Linux and macOS are attached to each [release](../../releases). Download the file for your system and unpack it anywhere:
+
+- **Windows** (`.zip`): unzip and run `topple.exe`. It is a single program with nothing else to install. Windows may warn that the app is from an unknown publisher (it isn't code-signed): choose *More info*, then *Run anyway*.
+- **Linux** (`.tar.gz`): `tar xzf topple-*-linux.tar.gz`, then run `./topple`. A normal desktop with OpenGL is enough.
+- **macOS** (`.tar.gz`): `tar xzf topple-*-macos.tar.gz`, then run `./topple`. macOS blocks unsigned programs the first time: right-click it and choose *Open*, or run `xattr -d com.apple.quarantine topple` once.
+
+Your progress (stars per level) is saved in `progress.txt` next to the program.
+
 ## How to play
 
 | Action | Control |
@@ -70,6 +80,17 @@ Design notes:
 - **Materials in one table.** What a block is made of (`BlockKind`: wood, stone, glass) decides its density, colour and whether it breaks. That table lives in `block.cpp`, so a new material is one entry plus a switch case, and level data only names the kind.
 - **Sound without files.** The effects are synthesised in `audio/synth.cpp` (sine tones, filtered noise), so there are no audio assets or licences to manage. `Level::Update` reports what happened (targets destroyed, strongest impact) and `PlayScene` decides which sounds to play.
 - **Input.** Game objects such as the `Slingshot` receive a `Pointer` struct instead of polling raylib, and report what happened (a `Launch`) instead of creating bodies themselves.
+
+## Making a release
+
+The GitHub workflow in `.github/workflows/build.yml` builds the game on Windows, Linux and macOS for every push and keeps the packaged result as a downloadable artifact on the run. To publish a release, push a tag that starts with `v`:
+
+```
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+When all three builds succeed, the workflow creates a GitHub Release named after the tag, with the three packages attached and release notes generated from the commits. The **Actions** tab shows progress, and the **Run workflow** button builds without releasing. Locally, `cmake --install build --prefix <folder> --component game` produces the same folder that goes into the packages.
 
 ## Credits
 

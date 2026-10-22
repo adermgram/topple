@@ -36,7 +36,11 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
 add_executable(topple ${SOURCES})
 target_include_directories(topple PRIVATE src)
 target_link_libraries(topple PRIVATE raylib box2d)
-target_compile_options(topple PRIVATE -Wall -Wextra)
+if(MSVC)
+  target_compile_options(topple PRIVATE /W4)
+else()
+  target_compile_options(topple PRIVATE -Wall -Wextra)
+endif()
 
 # Treat library headers as system headers so -Wall -Wextra only reports our code
 if(raylib_SOURCE_DIR)
@@ -57,3 +61,17 @@ add_custom_command(TARGET topple POST_BUILD
 
 add_custom_target(run COMMAND topple DEPENDS topple
                   WORKING_DIRECTORY $<TARGET_FILE_DIR:topple>)
+
+# --- Packaging --------------------------------------------------------------------------
+# `cmake --install build --prefix <dir> --component game` copies exactly what a player needs:
+# the executable, the resources and the licences. The component keeps raylib's and Box2D's
+# own install rules (headers, libraries) out of it.
+install(TARGETS topple RUNTIME DESTINATION . COMPONENT game)
+install(DIRECTORY resources DESTINATION . COMPONENT game)
+install(FILES README.md DESTINATION . COMPONENT game)
+if(raylib_SOURCE_DIR)
+  install(FILES ${raylib_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME LICENSE-raylib.txt COMPONENT game)
+endif()
+if(box2d_SOURCE_DIR)
+  install(FILES ${box2d_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME LICENSE-box2d.txt COMPONENT game)
+endif()
