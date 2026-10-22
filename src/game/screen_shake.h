@@ -4,18 +4,17 @@
 
 namespace game {
 
-// Camera shake with the "trauma" model: hits add trauma (0..1), it fades steadily, and the
-// shake grows with the square of it, so small bumps barely show and big hits really rattle.
+// Camera shake driven by "trauma" (0..1): hits add to it, it fades at a steady rate, and the
+// shake grows with its square, so small bumps barely show and big hits really rattle.
 class ScreenShake {
 public:
     void AddTrauma(float amount);   // stacks, capped at 1
-    void Raise(float level);        // at least this much; does not stack (for one event seen over several frames)
+    void Raise(float level);        // up to at least this much, without stacking
     void Update(float dt);
     void Reset();
 
     Vector2 offset() const;          // px
     float rotationDegrees() const;
-    float trauma() const { return trauma_; }
 
 private:
     float Shake() const { return trauma_ * trauma_; }

@@ -5,20 +5,18 @@
 
 namespace game {
 
-// Short-lived visual effects. Purely cosmetic: they never touch the physics world.
+// Short-lived visual effects. Purely cosmetic: nothing here touches the physics world.
 class Effects {
 public:
-    // Hard little pieces that fly out and fall (debris, shards)
+    // Debris that flies out and falls
     void Burst(Vector2 center, Color color, int count);
-    // Soft puffs that drift up, swell and fade (impact dust)
+    // Soft puffs that drift up, swell and fade
     void Dust(Vector2 center, Color color, int count);
-    // A thin circle that expands and fades (a shockwave)
+    // A thin circle that expands and fades
     void Ring(Vector2 center, Color color, float maxRadius);
 
     void Update(float dt);
     void Draw() const;
-
-    int particleCount() const { return (int)particles_.size(); }
 
 private:
     struct Particle {

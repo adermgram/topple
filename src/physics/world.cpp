@@ -1,5 +1,4 @@
 #include "physics/world.h"
-#include <algorithm>
 
 namespace physics {
 
@@ -7,7 +6,7 @@ namespace {
 
 constexpr int VELOCITY_ITERATIONS = 8;
 constexpr int POSITION_ITERATIONS = 3;
-constexpr int MAX_STEPS_PER_FRAME = 5;   // after a long hitch, drop time instead of spiralling
+constexpr int MAX_STEPS_PER_FRAME = 5;   // after a long stall, drop the backlog instead of spiralling
 constexpr float ROLLING_DAMPING = 0.8f;
 
 }  // namespace
@@ -20,20 +19,19 @@ void World::ImpactListener::PostSolve(b2Contact* contact, const b2ContactImpulse
     float total = 0.0f;
     for (int i = 0; i < impulse->count; i++) total += impulse->normalImpulses[i];
 
-    // Where the bodies touch; a contact with no manifold points falls back to one body's centre
     b2Body* bodyA = contact->GetFixtureA()->GetBody();
-    Vector2 point = ToPixels(bodyA->GetPosition());
+    Vector2 point = ToPixels(bodyA->GetPosition());   // fallback if there is no contact point
     if (contact->GetManifold()->pointCount > 0) {
-        b2WorldManifold world;
-        contact->GetWorldManifold(&world);
-        point = ToPixels(world.points[0]);
+        b2WorldManifold manifold;
+        contact->GetWorldManifold(&manifold);
+        point = ToPixels(manifold.points[0]);
     }
     out_.push_back({bodyA, contact->GetFixtureB()->GetBody(), total, point});
 }
 
 void World::DestroyBody(b2Body* body) { world_.DestroyBody(body); }
 
-bool World::AllAsleep() const {
+bool World::allAsleep() const {
     for (const b2Body* body = world_.GetBodyList(); body; body = body->GetNext())
         if (body->GetType() == b2_dynamicBody && body->IsAwake()) return false;
     return true;
@@ -77,7 +75,7 @@ b2Body* World::CreateBox(Vector2 centerPx, Vector2 sizePx, BodyType type, const 
 
 b2Body* World::CreateCircle(Vector2 centerPx, float radiusPx, BodyType type, const Material& material) {
     b2Body* body = CreateBody(centerPx, type);
-    // Box2D has no rolling resistance, so without this a ball rolls on flat ground forever
+    // Box2D has no rolling resistance: without this a ball would roll on flat ground forever
     body->SetAngularDamping(ROLLING_DAMPING);
 
     b2CircleShape shape;

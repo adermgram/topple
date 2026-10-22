@@ -12,7 +12,7 @@ constexpr float DUST_DRAG = 3.0f;
 constexpr float WAVE_SECONDS = 0.35f;
 
 float RandomFloat(float lo, float hi) {
-    return lo + (hi - lo) * (GetRandomValue(0, 10000) / 10000.0f);
+    return lo + (hi - lo) * (static_cast<float>(GetRandomValue(0, 10000)) / 10000.0f);
 }
 
 }  // namespace
@@ -66,13 +66,13 @@ void Effects::Update(float dt) {
 
 void Effects::Draw() const {
     for (const Particle& p : particles_) {
-        float t = p.life / p.maxLife;   // 1 -> 0
+        float t = p.life / p.maxLife;
         if (p.soft) DrawCircleV(p.pos, p.radius * (1.0f + 0.9f * (1.0f - t)), Fade(p.color, 0.45f * t));
         else DrawCircleV(p.pos, p.radius * (0.4f + 0.6f * t), Fade(p.color, t));
     }
 
     for (const Wave& w : waves_) {
-        float t = w.age / w.life;                 // 0 -> 1
+        float t = w.age / w.life;
         float eased = 1.0f - (1.0f - t) * (1.0f - t);   // fast at first, then slows
         float radius = w.maxRadius * eased;
         DrawRing(w.pos, std::max(0.0f, radius - 3.0f), radius, 0.0f, 360.0f, 40, Fade(w.color, 0.8f * (1.0f - t)));

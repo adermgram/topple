@@ -20,7 +20,7 @@ struct Palette {
 enum class FontWeight { Medium, SemiBold };
 enum class Align { Left, Center, Right };
 
-// Colors and fonts shared by every screen. Create it after the window is open.
+// Colours and fonts shared by every screen. Create it after the window is open.
 class Theme {
 public:
     Theme();
@@ -43,7 +43,6 @@ private:
     Palette palette_;
     Font medium_;
     Font semiBold_;
-    bool ownsFonts_ = false;
 };
 
 }  // namespace ui

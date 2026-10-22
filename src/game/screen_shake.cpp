@@ -23,7 +23,7 @@ void ScreenShake::Update(float dt) {
 
 void ScreenShake::Reset() { trauma_ = 0.0f; }
 
-// Sums of sines at unrelated frequencies: smooth, never repeating in a way the eye picks up
+// Sums of sines at unrelated frequencies: smooth, and never visibly repeating
 Vector2 ScreenShake::offset() const {
     float x = 0.6f * std::sin(time_ * 41.0f) + 0.4f * std::sin(time_ * 67.0f + 1.7f);
     float y = 0.6f * std::sin(time_ * 47.0f + 0.9f) + 0.4f * std::sin(time_ * 71.0f + 2.9f);

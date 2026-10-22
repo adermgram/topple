@@ -5,7 +5,6 @@
 #include "ui/button.h"
 #include <vector>
 
-// A row of numbered cards, one per level, plus a way back to the main menu.
 class LevelSelectScene : public Scene {
 public:
     explicit LevelSelectScene(AppContext& context);

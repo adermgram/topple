@@ -1,11 +1,12 @@
 #pragma once
 
-#include "app/scene_manager.h"
-#include "audio/sound_bank.h"
-#include "game/progress.h"
-#include "ui/theme.h"
+class SceneManager;
 
-// What every scene needs from the application. Passed by reference, owned by App.
+namespace audio { class SoundBank; }
+namespace game { class Progress; }
+namespace ui { class Theme; }
+
+// What every scene needs from the application. Owned by App, passed around by reference.
 struct AppContext {
     ui::Theme& theme;
     SceneManager& scenes;

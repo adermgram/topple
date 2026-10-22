@@ -1,4 +1,5 @@
 #include "game/ball.h"
+#include "util/color.h"
 #include <cmath>
 
 namespace game {
@@ -15,9 +16,9 @@ struct Style {
 const Style& StyleFor(BallKind kind) {
     //                          radius  density friction bounce
     static const Style standard {16.0f, {3.0f, 0.5f, 0.20f}, {232, 90, 74, 255},   "Ball"};
-    static const Style heavy    {19.0f, {9.0f, 0.6f, 0.05f}, {84, 92, 112, 255},   "Heavy ball"};
-    static const Style splitter {14.0f, {2.5f, 0.5f, 0.20f}, {250, 206, 70, 255},  "Splitter"};
-    static const Style fragment { 9.0f, {2.5f, 0.5f, 0.20f}, {255, 226, 120, 255}, "Fragment"};
+    static const Style heavy    {18.0f, {5.5f, 0.6f, 0.05f}, {84, 92, 112, 255},   "Heavy ball"};
+    static const Style splitter {15.0f, {3.4f, 0.5f, 0.20f}, {250, 206, 70, 255},  "Splitter"};
+    static const Style fragment {12.0f, {5.5f, 0.5f, 0.20f}, {255, 226, 120, 255}, "Fragment"};
 
     switch (kind) {
     case BallKind::Standard: return standard;
@@ -26,11 +27,6 @@ const Style& StyleFor(BallKind kind) {
     case BallKind::Fragment: return fragment;
     }
     return standard;
-}
-
-Color Shade(Color c, float factor) {
-    return {(unsigned char)(c.r * factor), (unsigned char)(c.g * factor),
-            (unsigned char)(c.b * factor), c.a};
 }
 
 }  // namespace
@@ -55,12 +51,11 @@ void Ball::Draw() const { DrawAt(position(), body_->GetAngle(), kind_); }
 
 void Ball::DrawAt(Vector2 centerPx, float angleRad, BallKind kind) {
     const Style& style = StyleFor(kind);
-    const Color dark = Shade(style.color, 0.55f);
+    const Color dark = util::Shade(style.color, 0.55f);
 
     DrawCircleV(centerPx, style.radius, style.color);
-    if (kind == BallKind::Heavy) DrawCircleLinesV(centerPx, style.radius * 0.62f, Shade(style.color, 1.4f));
+    if (kind == BallKind::Heavy) DrawCircleLinesV(centerPx, style.radius * 0.62f, util::Shade(style.color, 1.4f));
 
-    // A tick mark makes the spin visible
     Vector2 tick = {centerPx.x + std::cos(angleRad) * style.radius * 0.6f,
                     centerPx.y + std::sin(angleRad) * style.radius * 0.6f};
     DrawLineEx(centerPx, tick, kind == BallKind::Fragment ? 2.0f : 3.0f, dark);

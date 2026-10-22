@@ -8,11 +8,15 @@ namespace {
 
 constexpr float TWO_PI = 6.2831853f;
 
-using Buffer = std::vector<float>;   // samples while building; scaled to a target peak at the end
+constexpr float INAUDIBLE = 0.002f;   // an envelope below this is treated as finished
 
-Buffer Silence(float seconds) { return Buffer((std::size_t)(seconds * SAMPLE_RATE), 0.0f); }
+using Buffer = std::vector<float>;   // built as floats, then scaled to a target peak
 
-float TimeOf(std::size_t sample) { return (float)sample / SAMPLE_RATE; }
+std::size_t SampleAt(float seconds) { return static_cast<std::size_t>(seconds * SAMPLE_RATE); }
+
+float TimeOf(std::size_t sample) { return static_cast<float>(sample) / SAMPLE_RATE; }
+
+Buffer Silence(float seconds) { return Buffer(SampleAt(seconds), 0.0f); }
 
 // Deterministic white noise, so every run sounds the same
 class Noise {
@@ -21,7 +25,7 @@ public:
         state_ ^= state_ << 13;
         state_ ^= state_ >> 17;
         state_ ^= state_ << 5;
-        return state_ / 2147483648.0f - 1.0f;
+        return static_cast<float>(state_) / 2147483648.0f - 1.0f;
     }
 
 private:
@@ -40,13 +44,13 @@ private:
     float state_ = 0.0f;
 };
 
-// A struck note: a sine with two quiet overtones, a short attack and an exponential decay
+// A note: a sine with two quiet overtones, a short attack and an exponential decay
 void AddTone(Buffer& out, float start, float duration, float freq, float gain, float decay) {
     constexpr float ATTACK = 0.006f;
-    constexpr float RELEASE = 0.02f;   // fade out at the very end so the note never clicks off
+    constexpr float RELEASE = 0.02f;   // fades the very end so the note can't click off
 
-    std::size_t first = (std::size_t)(start * SAMPLE_RATE);
-    std::size_t count = (std::size_t)(duration * SAMPLE_RATE);
+    const std::size_t first = SampleAt(start);
+    const std::size_t count = SampleAt(duration);
     for (std::size_t i = 0; i < count && first + i < out.size(); i++) {
         float t = TimeOf(i);
         float envelope = std::min(1.0f, t / ATTACK) * std::exp(-decay * t) *
@@ -57,9 +61,9 @@ void AddTone(Buffer& out, float start, float duration, float freq, float gain, f
     }
 }
 
-// A struck wooden object. Real objects don't ring at one pitch: they vibrate in several
-// "modes" at uneven frequency ratios, the higher ones dying away fastest. That uneven
-// stack is what makes a knock sound like wood and not like a beep.
+// A struck piece of wood. Real objects don't ring at one pitch: they vibrate in several
+// modes at uneven frequency ratios, the higher ones dying fastest. That uneven stack is
+// what makes a knock sound like wood and not like a beep.
 void AddStrike(Buffer& out, float baseFreq, float gain, float decayScale) {
     struct Mode {
         float ratio, gain, decay;
@@ -71,39 +75,38 @@ void AddStrike(Buffer& out, float baseFreq, float gain, float decayScale) {
         for (std::size_t i = 0; i < out.size(); i++) {
             float t = TimeOf(i);
             float envelope = std::exp(-mode.decay * decayScale * t);
-            if (envelope < 0.002f) break;
+            if (envelope < INAUDIBLE) break;
             out[i] += gain * mode.gain * envelope * std::sin(TWO_PI * baseFreq * mode.ratio * t);
         }
     }
 }
 
-// A short ring: a sine that starts at `start` and fades away. Several at different pitches
-// and start times make the tinkle of falling glass.
+// A short ring. Several at different pitches and start times make falling glass tinkle.
 void AddPing(Buffer& out, float start, float freq, float gain, float decay) {
-    std::size_t first = (std::size_t)(start * SAMPLE_RATE);
+    const std::size_t first = SampleAt(start);
     for (std::size_t i = first; i < out.size(); i++) {
         float t = TimeOf(i - first);
         float envelope = std::exp(-decay * t);
-        if (envelope < 0.002f) break;
+        if (envelope < INAUDIBLE) break;
         out[i] += gain * envelope * std::sin(TWO_PI * freq * t);
     }
 }
 
-// A quick rising "pew": the pitch glides from f0 up toward f1 while the sound dies away
+// A rising "pew": the pitch glides from f0 toward f1 while the sound dies away
 void AddChirp(Buffer& out, float start, float f0, float f1, float gain, float decay) {
-    std::size_t first = (std::size_t)(start * SAMPLE_RATE);
+    const std::size_t first = SampleAt(start);
     float phase = 0.0f;
     for (std::size_t i = first; i < out.size(); i++) {
         float t = TimeOf(i - first);
         float envelope = std::exp(-decay * t);
-        if (envelope < 0.002f) break;
+        if (envelope < INAUDIBLE) break;
         phase += TWO_PI * (f0 + (f1 - f0) * (1.0f - std::exp(-35.0f * t))) / SAMPLE_RATE;
         out[i] += gain * envelope * std::sin(phase);
     }
 }
 
-// Scales to an exact peak, then fades in over 0.2 ms (the onset stays sharp) and out over
-// 20 ms, so a sound that doesn't start or end exactly at zero can't click
+// Scales to an exact peak, then fades in over 0.2 ms and out over 20 ms, so a sound that
+// doesn't start or end exactly at zero can't click
 Samples ToPcm(const Buffer& in, float peak) {
     constexpr float FADE_IN = 0.0002f;
     constexpr float FADE_OUT = 0.02f;
@@ -117,7 +120,7 @@ Samples ToPcm(const Buffer& in, float peak) {
     for (std::size_t i = 0; i < in.size(); i++) {
         float t = TimeOf(i);
         float fade = std::min(1.0f, t / FADE_IN) * std::min(1.0f, (total - t) / FADE_OUT);
-        out[i] = (std::int16_t)(std::clamp(in[i] * scale * fade, -1.0f, 1.0f) * 32767.0f);
+        out[i] = static_cast<std::int16_t>(std::clamp(in[i] * scale * fade, -1.0f, 1.0f) * 32767.0f);
     }
     return out;
 }
@@ -138,7 +141,7 @@ Samples MakeClick() {
 Samples MakeLaunch() {
     Buffer b = Silence(0.4f);
     Noise noise;
-    LowPass airHigh(2500.0f), airLow(500.0f);   // their difference is a band of noise
+    LowPass airHigh(2500.0f), airLow(500.0f);   // high minus low leaves a band of noise
     float twangPhase = 0.0f, overtonePhase = 0.0f;
 
     for (std::size_t i = 0; i < b.size(); i++) {
@@ -146,7 +149,7 @@ Samples MakeLaunch() {
 
         float snap = noise.Next() * std::exp(-220.0f * t);
 
-        // Pitch falls fast, with a little wobble like a vibrating band
+        // The pitch falls fast, with a slight wobble like a vibrating band
         float freq = (140.0f + 300.0f * std::exp(-14.0f * t)) * (1.0f + 0.03f * std::sin(TWO_PI * 28.0f * t));
         twangPhase += TWO_PI * freq / SAMPLE_RATE;
         overtonePhase += TWO_PI * freq * 2.01f / SAMPLE_RATE;
@@ -187,7 +190,7 @@ Samples MakePop() {
     for (std::size_t i = 0; i < b.size(); i++) {
         float t = TimeOf(i);
 
-        puff.SetCutoff(500.0f + 2500.0f * std::exp(-25.0f * t));   // the puff gets duller as it fades
+        puff.SetCutoff(500.0f + 2500.0f * std::exp(-25.0f * t));   // duller as it fades
         float poof = puff.Process(noise.Next()) * std::exp(-16.0f * t);
 
         chirpPhase += TWO_PI * (350.0f + 650.0f * (1.0f - std::exp(-55.0f * t))) / SAMPLE_RATE;
@@ -204,7 +207,7 @@ Samples MakePop() {
 Samples MakeShatter() {
     Buffer b = Silence(0.5f);
     Noise noise;
-    LowPass split(3500.0f);   // noise minus its low part leaves the bright, glassy hiss
+    LowPass split(3500.0f);   // noise minus its low part is a bright hiss
 
     for (std::size_t i = 0; i < b.size(); i++) {
         float t = TimeOf(i);
@@ -243,7 +246,7 @@ Samples MakeWin() {
     const float notes[] = {523.25f, 659.25f, 783.99f, 1046.50f};
     for (int i = 0; i < 4; i++) {
         bool last = (i == 3);
-        AddTone(b, i * 0.11f, last ? 0.85f : 0.45f, notes[i], 0.32f, last ? 3.0f : 5.0f);
+        AddTone(b, static_cast<float>(i) * 0.11f, last ? 0.85f : 0.45f, notes[i], 0.32f, last ? 3.0f : 5.0f);
     }
     return ToPcm(b, 0.55f);
 }
@@ -252,7 +255,7 @@ Samples MakeWin() {
 Samples MakeLose() {
     Buffer b = Silence(1.2f);
     const float notes[] = {392.00f, 349.23f, 311.13f, 261.63f};
-    for (int i = 0; i < 4; i++) AddTone(b, i * 0.2f, 0.5f, notes[i], 0.35f, 6.0f);
+    for (int i = 0; i < 4; i++) AddTone(b, static_cast<float>(i) * 0.2f, 0.5f, notes[i], 0.35f, 6.0f);
     return ToPcm(b, 0.45f);
 }
 

@@ -1,6 +1,5 @@
 #pragma once
 
-// One screen of the game (menu, level, ...). The SceneManager owns the active one.
 class Scene {
 public:
     virtual ~Scene() = default;

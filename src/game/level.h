@@ -4,6 +4,7 @@
 #include "game/block.h"
 #include "game/effects.h"
 #include "game/level_def.h"
+#include "game/level_events.h"
 #include "game/target.h"
 #include "physics/world.h"
 #include "raylib.h"
@@ -11,15 +12,8 @@
 
 namespace game {
 
-// What happened during one Update, for the owner to react to (sounds, rules, ...)
-struct LevelEvents {
-    int targetsDestroyed = 0;
-    int glassShattered = 0;
-    float strongestImpact = 0.0f;   // hardest collision this update; small values are just resting contact
-};
-
-// Everything that lives in the physics world for one puzzle: terrain, structures,
-// targets and fired balls. Knows nothing about the rules (win/lose), sound or the UI.
+// Everything that lives in the physics world for one puzzle: terrain, structures, targets
+// and fired balls. It knows nothing about the rules, sound or the UI.
 class Level {
 public:
     explicit Level(const LevelDef& def);
@@ -29,15 +23,14 @@ public:
 
     void Fire(Vector2 from, Vector2 velocityPxPerSec, BallKind kind);
 
-    // Splits a moving Splitter ball into three pieces. Returns false if there is none to split.
+    // Splits a moving Splitter into three pieces; false if there is none to split
     bool TriggerAbility();
-    // True while a Splitter is flying and could still be split (for the on-screen prompt)
-    bool CanTriggerAbility() const;
+    bool canTriggerAbility() const;
 
-    int shots() const { return (int)ammo_.size(); }
-    BallKind ammo(int index) const { return ammo_.at(index); }
-    int targetsRemaining() const { return (int)targets_.size(); }
-    bool IsSettled() const { return world_.AllAsleep(); }
+    int shots() const { return static_cast<int>(ammo_.size()); }
+    BallKind ammo(int index) const { return ammo_.at(static_cast<std::size_t>(index)); }
+    int targetsRemaining() const { return static_cast<int>(targets_.size()); }
+    bool isSettled() const { return world_.allAsleep(); }
     Vector2 slingAnchor() const { return layout::SLING_ANCHOR; }
     float groundY() const { return layout::GROUND_TOP; }
 
@@ -45,18 +38,18 @@ private:
     void Build(const LevelDef& def);
     void ApplyImpacts();
     void EmitImpactDust();
-    int RemoveDestroyedTargets();   // returns how many were removed
-    int RemoveDestroyedBlocks();    // broken glass; returns how many
+    int RemoveDestroyedTargets();
+    int RemoveDestroyedBlocks();
     const Ball* FindSplittable() const;
 
-    // Declared first: blocks, targets and balls hold pointers into the world
+    // The world comes first: blocks, targets and balls hold pointers into it
     physics::World world_;
     std::vector<Block> blocks_;
     std::vector<Target> targets_;
     std::vector<Ball> balls_;
     Effects effects_;
     std::vector<BallKind> ammo_;
-    float age_ = 0.0f;   // seconds since the level loaded
+    float age_ = 0.0f;
 };
 
 }  // namespace game

@@ -18,8 +18,8 @@ constexpr BallKind S = BallKind::Standard;
 constexpr BallKind H = BallKind::Heavy;
 constexpr BallKind X = BallKind::Splitter;
 
-// Stacks pieces on a surface. Each Add* takes the y of the surface to stand on and
-// returns the y of the new top surface, so pieces can be piled on one another.
+// Each Add* stands on the given surface height and returns the new top surface,
+// so pieces can be stacked on one another.
 class Builder {
 public:
     Builder(std::string name, std::vector<BallKind> ammo) {
@@ -27,14 +27,12 @@ public:
         def_.ammo = std::move(ammo);
     }
 
-    // A box of any material standing on baseY
     float AddBox(BlockKind kind, float centerX, float baseY, float width, float height) {
         float y = baseY - GAP - height / 2;
         def_.blocks.push_back({kind, {centerX, y}, {width, height}});
         return y - height / 2;
     }
 
-    // Two pillars with a roof plank across them
     float AddTower(float centerX, float baseY, float pillarHeight, float spread,
                    BlockKind pillars = BlockKind::Plank, BlockKind roof = BlockKind::Plank) {
         float pillarTop = baseY;
@@ -176,7 +174,7 @@ LevelDef IronFortress() {
     return b.Done();
 }
 
-// Targets spread along the ground, each behind its own cover: one splitter can fan out over all of them
+// Targets spread along the ground, each with its own cover: one splitter can fan out over all of them
 LevelDef Spread() {
     Builder b("Spread", {X, X, X, S, S});
     b.AddTarget(800, GROUND_TOP);

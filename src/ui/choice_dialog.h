@@ -1,5 +1,6 @@
 #pragma once
 
+#include "input/pointer.h"
 #include "raylib.h"
 #include "ui/button.h"
 #include "ui/theme.h"
@@ -8,8 +9,8 @@
 
 namespace ui {
 
-// A centred panel over a dimmed screen: a title, optional stars and a row of choice buttons.
-// Used for the result of a round and for the pause menu.
+// A centred panel over a dimmed screen: a title, optional stars and a row of buttons.
+// Used for the pause menu and for the result of a round.
 class ChoiceDialog {
 public:
     enum class Action { None, Resume, Retry, Next, Levels };
@@ -22,14 +23,13 @@ public:
 
     static constexpr int NO_STARS = -1;
 
-    // stars (0..3) adds a row of stars that pop in one by one; NO_STARS leaves it out
+    // stars (0..3) adds a row of stars that pop in one by one
     void Show(std::string title, std::string subtitle, Color accent,
               const std::vector<Choice>& choices, int stars = NO_STARS);
-    void Hide() { visible_ = false; entries_.clear(); }
-    bool visible() const { return visible_; }
+    void Hide();
 
-    // Returns the chosen action on the frame a button is clicked
-    Action Update(float dt);
+    // The chosen action, on the frame its button is clicked
+    Action Update(float dt, const Pointer& pointer);
     void Draw(const Theme& theme) const;
 
 private:
@@ -39,8 +39,8 @@ private:
     };
 
     bool visible_ = false;
-    float appear_ = 0.0f;   // 0..1 fade-in progress
-    float shown_ = 0.0f;    // seconds since Show, drives the star animation
+    float appear_ = 0.0f;   // fade-in progress, 0..1
+    float shown_ = 0.0f;    // seconds since Show
     int stars_ = NO_STARS;
     std::string title_;
     std::string subtitle_;

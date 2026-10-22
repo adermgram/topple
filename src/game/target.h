@@ -26,10 +26,10 @@ public:
 private:
     b2Body* body_;   // non-owning
     float health_;
-    float flash_ = 0.0f;       // seconds of white hit highlight left (also drives the squash)
+    float flash_ = 0.0f;       // seconds of hit highlight left; also drives the squash
     float dazed_ = 0.0f;       // seconds of dizzy face left
-    float time_ = 0.0f;        // drives the blinking
-    float blinkOffset_;        // so targets don't all blink together
+    float time_ = 0.0f;
+    float blinkOffset_;        // keeps the targets from blinking in unison
 };
 
 }  // namespace game

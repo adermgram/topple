@@ -2,16 +2,17 @@
 
 #include "app/app_context.h"
 #include "app/scene.h"
+#include "game/feedback.h"
 #include "game/level.h"
-#include "game/screen_shake.h"
 #include "game/slingshot.h"
 #include "ui/button.h"
 #include "ui/choice_dialog.h"
+#include <cstddef>
 
-// One round: the player fires a limited number of shots at the level's targets.
+// One round: a limited number of balls to fire at a level's targets
 class PlayScene : public Scene {
 public:
-    PlayScene(AppContext& context, int levelIndex);
+    PlayScene(AppContext& context, std::size_t levelIndex);
     ~PlayScene() override;
 
     void Update(float dt) override;
@@ -20,33 +21,31 @@ public:
 private:
     enum class Phase { Playing, Paused, Won, Lost };
 
-    game::BallKind NextBall() const;
-    void Fire(const game::Slingshot::Launch& launch);
-    void React(const game::LevelEvents& events, float dt);   // sounds and shake
-    void PlaySounds(const game::LevelEvents& events, float dt);
-    Camera2D ShakeCamera() const;
+    void UpdatePlaying(float dt, const Pointer& pointer);
     void UpdateRules(float dt);
-    void Finish(Phase result);
-    void UpdatePlaying(float dt);
-    void LeaveToLevels();
+    void Fire(const game::Slingshot::Launch& launch);
     void Pause();
     void Resume();
+    void Finish(Phase result);
     void HandleChoice(ui::ChoiceDialog::Action action);
-    bool HasNextLevel() const;
+    void LeaveToLevels();
+
+    game::BallKind nextBall() const;
+    bool hasNextLevel() const;
+    Camera2D ShakeCamera() const;
     void DrawHud() const;
+    void DrawAmmoQueue() const;
 
     AppContext& context_;
-    int levelIndex_;
-    game::Level level_;               // declared before slingshot_, which is built from it
+    std::size_t levelIndex_;
+    game::Level level_;   // before slingshot_, which is built from it
     game::Slingshot slingshot_;
-    game::ScreenShake shake_;
+    game::Feedback feedback_;
     ui::Button levelsButton_;
     ui::ChoiceDialog dialog_;
 
     Phase phase_ = Phase::Playing;
     int shotsLeft_;
-    float winTimer_ = 0.0f;           // time since the last target fell
-    float sinceLastShot_ = 0.0f;      // counted only once the shots have run out
-    float hitCooldown_ = 0.0f;        // time until another hit sound may play
-    float lastHitImpact_ = 0.0f;      // impulse of the hit that started the cooldown
+    float winTimer_ = 0.0f;         // time since the last target fell
+    float sinceLastShot_ = 0.0f;    // only counted once the balls have run out
 };

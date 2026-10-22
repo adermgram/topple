@@ -4,13 +4,13 @@
 #include <box2d/box2d.h>
 #include <vector>
 
-// Thin wrapper over Box2D. Everything outside this folder works in pixels
-// (y down, like the screen); the conversion to metres happens here only.
+// A thin wrapper over Box2D. The rest of the game works in pixels with y pointing down, like
+// the screen; metres only exist in this folder.
 namespace physics {
 
 constexpr float PIXELS_PER_METER = 32.0f;
-constexpr float GRAVITY = 18.0f;           // m/s^2, a bit above real life for snappier play
-constexpr float TIME_STEP = 1.0f / 60.0f;  // fixed step keeps the simulation deterministic
+constexpr float GRAVITY = 18.0f;           // m/s^2; a bit above real life, for snappier play
+constexpr float TIME_STEP = 1.0f / 60.0f;  // fixed, so the simulation doesn't depend on the frame rate
 
 inline float ToMeters(float px) { return px / PIXELS_PER_METER; }
 inline b2Vec2 ToMeters(Vector2 px) { return {px.x / PIXELS_PER_METER, px.y / PIXELS_PER_METER}; }
@@ -21,11 +21,11 @@ enum class BodyType { Static, Dynamic };
 struct Material {
     float density = 1.0f;
     float friction = 0.6f;
-    float restitution = 0.05f;   // bounciness
+    float restitution = 0.05f;
 };
 
-// Two bodies colliding, and where (px). impulse is the total normal impulse of the contact (N*s):
-// resting contact gives small values, a hard hit gives large ones.
+// Two bodies colliding, and where (px). The impulse is the contact's total normal impulse:
+// small for bodies resting on each other, large for a hard hit.
 struct Impact {
     const b2Body* a;
     const b2Body* b;
@@ -36,20 +36,19 @@ struct Impact {
 class World {
 public:
     World();
-    World(const World&) = delete;              // the contact listener points into this object
+    World(const World&) = delete;   // the contact listener points into this object
     World& operator=(const World&) = delete;
 
-    // Advances the simulation in fixed steps, however long the frame took.
-    // Replaces the impacts() of the previous call.
+    // Runs as many fixed steps as the elapsed time needs. Replaces the previous impacts().
     void Update(float dt);
 
-    // Bodies are owned by the world and live until destroyed or the world is destroyed
+    // The world owns every body it creates
     b2Body* CreateBox(Vector2 centerPx, Vector2 sizePx, BodyType type, const Material& material);
     b2Body* CreateCircle(Vector2 centerPx, float radiusPx, BodyType type, const Material& material);
-    void DestroyBody(b2Body* body);   // not while Update is running
+    void DestroyBody(b2Body* body);
 
     const std::vector<Impact>& impacts() const { return impacts_; }
-    bool AllAsleep() const;           // true when nothing is moving any more
+    bool allAsleep() const;   // nothing is moving any more
 
 private:
     class ImpactListener : public b2ContactListener {

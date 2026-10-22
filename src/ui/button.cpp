@@ -1,5 +1,5 @@
 #include "ui/button.h"
-#include "raymath.h"
+#include "util/color.h"
 #include <cmath>
 #include <utility>
 
@@ -10,50 +10,43 @@ namespace {
 constexpr float HOVER_SPEED = 14.0f;
 constexpr float ROUNDNESS = 0.35f;
 
-Color Mix(Color a, Color b, float t) {
-    return {(unsigned char)Lerp(a.r, b.r, t), (unsigned char)Lerp(a.g, b.g, t),
-            (unsigned char)Lerp(a.b, b.b, t), (unsigned char)Lerp(a.a, b.a, t)};
-}
-
 }  // namespace
 
 Button::Button(std::string label, Rectangle bounds, bool primary, float fontSize)
     : label_(std::move(label)), bounds_(bounds), primary_(primary), fontSize_(fontSize) {}
 
-bool Button::Update(float dt) {
-    bool over = CheckCollisionPointRec(GetMousePosition(), bounds_);
+bool Button::Update(float dt, const Pointer& pointer) {
+    const bool over = CheckCollisionPointRec(pointer.pos, bounds_);
 
-    // Exponential ease so the animation speed doesn't depend on frame rate
-    float target = over ? 1.0f : 0.0f;
+    // Exponential easing, so the animation speed doesn't depend on the frame rate
+    const float target = over ? 1.0f : 0.0f;
     hover_ += (target - hover_) * (1.0f - std::exp(-HOVER_SPEED * dt));
 
-    bool clicked = false;
-    if (over && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) pressed_ = true;
-    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-        clicked = pressed_ && over;
-        pressed_ = false;
-    }
+    if (over && pointer.pressed) pressed_ = true;
+    if (!pointer.released) return false;
+
+    const bool clicked = pressed_ && over;
+    pressed_ = false;
     return clicked;
 }
 
 void Button::Draw(const Theme& theme) const {
     const Palette& p = theme.palette();
 
-    float dip = pressed_ ? 2.0f : 0.0f;
+    const float dip = pressed_ ? 2.0f : 0.0f;
     Rectangle body = bounds_;
     body.y += dip;
 
-    // Soft shadow underneath, shrinking when the button is pressed
     Rectangle shadow = bounds_;
     shadow.y += 5.0f - dip;
     DrawRectangleRounded(shadow, ROUNDNESS, 12, p.shadow);
 
-    Color base = primary_ ? p.accent : p.button;
-    Color lit = primary_ ? Mix(p.accent, WHITE, 0.25f) : p.buttonHover;
-    DrawRectangleRounded(body, ROUNDNESS, 12, Mix(base, lit, hover_));
+    const Color base = primary_ ? p.accent : p.button;
+    const Color lit = primary_ ? util::Mix(p.accent, WHITE, 0.25f) : p.buttonHover;
+    DrawRectangleRounded(body, ROUNDNESS, 12, util::Mix(base, lit, hover_));
 
-    Color textColor = primary_ ? Color{30, 24, 14, 255} : p.text;
-    Vector2 center = {body.x + body.width / 2, body.y + body.height / 2 - fontSize_ * 0.6f};
+    const Color textColor = primary_ ? Color{30, 24, 14, 255} : p.text;
+    const Vector2 center = {body.x + body.width / 2, body.y + body.height / 2 - fontSize_ * 0.6f};
     theme.DrawText(label_, center, fontSize_, textColor, Align::Center, FontWeight::SemiBold);
 }
 

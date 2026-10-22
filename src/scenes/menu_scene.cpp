@@ -1,6 +1,10 @@
 #include "scenes/menu_scene.h"
+#include "app/scene_manager.h"
+#include "audio/sound_bank.h"
 #include "config.h"
+#include "input/pointer.h"
 #include "scenes/level_select_scene.h"
+#include "ui/theme.h"
 #include <memory>
 
 namespace {
@@ -21,11 +25,13 @@ MenuScene::MenuScene(AppContext& context)
       quitButton_("Quit", CenteredButton(360 + BUTTON_H + BUTTON_GAP)) {}
 
 void MenuScene::Update(float dt) {
-    if (playButton_.Update(dt)) {
+    const Pointer pointer = ReadPointer();
+
+    if (playButton_.Update(dt, pointer)) {
         context_.sound.Play(audio::Sfx::Click);
         context_.scenes.Replace(std::make_unique<LevelSelectScene>(context_));
     }
-    if (quitButton_.Update(dt)) context_.scenes.Quit();
+    if (quitButton_.Update(dt, pointer)) context_.scenes.Quit();
 }
 
 void MenuScene::Draw() const {
@@ -34,7 +40,7 @@ void MenuScene::Draw() const {
 
     theme.DrawBackground();
 
-    float cx = config::SCREEN_W / 2.0f;
+    const float cx = config::SCREEN_W / 2.0f;
     theme.DrawText("TOPPLE", {cx, 150}, 110, p.accent, ui::Align::Center, ui::FontWeight::SemiBold);
     theme.DrawText("A physics puzzle", {cx, 275}, 30, p.textDim, ui::Align::Center);
 

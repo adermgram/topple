@@ -12,8 +12,8 @@ public:
     void Run();
 
 private:
-    // Members are created top to bottom and destroyed bottom to top: the window must exist
-    // before the theme loads fonts, and the audio device before the sounds are built.
+    // Members are created top to bottom and destroyed in reverse: the window has to exist
+    // before the theme loads fonts, and the audio device before the sounds are built
     struct WindowGuard {
         WindowGuard();
         ~WindowGuard();
