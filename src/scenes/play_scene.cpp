@@ -13,11 +13,11 @@
 
 namespace {
 
-constexpr float WIN_DELAY = 0.8f;       // lets the last burst play before the dialog
-constexpr float LOSE_MIN_WAIT = 2.0f;   // after the last ball, give it time to land
-constexpr float LOSE_MAX_WAIT = 8.0f;   // ...but don't wait forever for everything to stop
+    constexpr float WIN_DELAY = 0.8f;       // lets the last burst play before the dialog
+    constexpr float LOSE_MIN_WAIT = 2.0f;   // after the last ball, give it time to land
+    constexpr float LOSE_MAX_WAIT = 8.0f;   // ...but don't wait forever for everything to stop
 
-const Color LOSE_COLOR{232, 100, 90, 255};
+    const Color LOSE_COLOR{232, 100, 90, 255};
 
 }  // namespace
 
@@ -45,37 +45,37 @@ void PlayScene::Update(float dt) {
     const bool escape = IsKeyPressed(KEY_ESCAPE);
 
     switch (phase_) {
-    case Phase::Playing:
-        if (escape) {
-            context_.sound.Play(audio::Sfx::Click);
-            Pause();
-        } else if (levelsButton_.Update(dt, pointer)) {
-            context_.sound.Play(audio::Sfx::Click);
-            LeaveToLevels();
-            return;
-        } else {
-            UpdatePlaying(dt, pointer);
-        }
-        break;
+        case Phase::Playing:
+            if (escape) {
+                context_.sound.Play(audio::Sfx::Click);
+                Pause();
+            } else if (levelsButton_.Update(dt, pointer)) {
+                context_.sound.Play(audio::Sfx::Click);
+                LeaveToLevels();
+                return;
+            } else {
+                UpdatePlaying(dt, pointer);
+            }
+            break;
 
-    case Phase::Paused:
-        if (escape) {
-            context_.sound.Play(audio::Sfx::Click);
-            Resume();
-        }
-        break;
+        case Phase::Paused:
+            if (escape) {
+                context_.sound.Play(audio::Sfx::Click);
+                Resume();
+            }
+            break;
 
-    case Phase::Won:
-    case Phase::Lost:
-        if (escape) {
-            LeaveToLevels();
-            return;
+        case Phase::Won:
+        case Phase::Lost:
+            if (escape) {
+                LeaveToLevels();
+                return;
+            }
+            feedback_.React(level_.Update(dt), dt);   // lets the last pieces and particles finish
+            break;
         }
-        feedback_.React(level_.Update(dt), dt);   // lets the last pieces and particles finish
-        break;
-    }
 
-    HandleChoice(dialog_.Update(dt, pointer));
+        HandleChoice(dialog_.Update(dt, pointer));
 }
 
 void PlayScene::UpdatePlaying(float dt, const Pointer& pointer) {
@@ -168,20 +168,20 @@ void PlayScene::HandleChoice(ui::ChoiceDialog::Action action) {
     if (action != Action::None) context_.sound.Play(audio::Sfx::Click);
 
     switch (action) {
-    case Action::Retry:
-        context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_));
-        break;
-    case Action::Next:
-        context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_ + 1));
-        break;
-    case Action::Levels:
-        LeaveToLevels();
-        break;
-    case Action::Resume:
-        Resume();
-        break;
-    case Action::None:
-        break;
+        case Action::Retry:
+            context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_));
+            break;
+        case Action::Next:
+            context_.scenes.Replace(std::make_unique<PlayScene>(context_, levelIndex_ + 1));
+            break;
+        case Action::Levels:
+            LeaveToLevels();
+            break;
+        case Action::Resume:
+            Resume();
+            break;
+        case Action::None:
+            break;
     }
 }
 
@@ -198,7 +198,6 @@ Camera2D PlayScene::ShakeCamera() const {
     return camera;
 }
 
-// One icon per ball, first on the left; the one up next is ringed
 void PlayScene::DrawAmmoQueue() const {
     const ui::Palette& p = context_.theme.palette();
     const int total = level_.shots();

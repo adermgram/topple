@@ -9,7 +9,6 @@
 #include "ui/choice_dialog.h"
 #include <cstddef>
 
-// One round: a limited number of balls to fire at a level's targets
 class PlayScene : public Scene {
 public:
     PlayScene(AppContext& context, std::size_t levelIndex);
@@ -38,7 +37,7 @@ private:
 
     AppContext& context_;
     std::size_t levelIndex_;
-    game::Level level_;   // before slingshot_, which is built from it
+    game::Level level_; 
     game::Slingshot slingshot_;
     game::Feedback feedback_;
     ui::Button levelsButton_;

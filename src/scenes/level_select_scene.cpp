@@ -16,28 +16,29 @@
 
 namespace {
 
-constexpr int COLUMNS = 5;
-constexpr float CARD_SIZE = 120.0f;
-constexpr float CARD_GAP_X = 40.0f;
-constexpr float CARD_GAP_Y = 84.0f;   // room for the stars and the name under each card
-constexpr float GRID_TOP = 205.0f;
-constexpr float CARD_FONT_SIZE = 46.0f;
-constexpr float STAR_RADIUS = 10.0f;
-constexpr float STAR_SPACING = 26.0f;
+    constexpr int COLUMNS = 5;
+    constexpr float CARD_SIZE = 120.0f;
+    constexpr float CARD_GAP_X = 40.0f;
+    constexpr float CARD_GAP_Y = 84.0f;   // room for the stars and the name under each card
+    constexpr float GRID_TOP = 205.0f;
+    constexpr float CARD_FONT_SIZE = 46.0f;
+    constexpr float STAR_RADIUS = 10.0f;
+    constexpr float STAR_SPACING = 26.0f;
 
-// Every row is centred on its own, so a short last row sits in the middle
-Rectangle CardBounds(int index, int total) {
-    const int row = index / COLUMNS;
-    const int column = index % COLUMNS;
-    const int cardsInRow = std::min(COLUMNS, total - row * COLUMNS);
+    Rectangle CardBounds(int index, int total) {
+        const int row = index / COLUMNS;
+        const int column = index % COLUMNS;
+        const int cardsInRow = std::min(COLUMNS, total - row * COLUMNS);
 
-    const float rowWidth = static_cast<float>(cardsInRow) * CARD_SIZE + static_cast<float>(cardsInRow - 1) * CARD_GAP_X;
-    const float x = (config::SCREEN_W - rowWidth) / 2 + static_cast<float>(column) * (CARD_SIZE + CARD_GAP_X);
-    const float y = GRID_TOP + static_cast<float>(row) * (CARD_SIZE + CARD_GAP_Y);
-    return {x, y, CARD_SIZE, CARD_SIZE};
-}
+        const float rowWidth = static_cast<float>(cardsInRow) * CARD_SIZE + static_cast<float>(cardsInRow - 1) * CARD_GAP_X;
+        const float x = (config::SCREEN_W - rowWidth) / 2 + static_cast<float>(column) * (CARD_SIZE + CARD_GAP_X);
+        const float y = GRID_TOP + static_cast<float>(row) * (CARD_SIZE + CARD_GAP_Y);
+        return {x, y, CARD_SIZE, CARD_SIZE};
+    }
 
-Rectangle BackBounds() { return {(config::SCREEN_W - 200.0f) / 2, config::SCREEN_H - 96.0f, 200.0f, 56.0f}; }
+    Rectangle BackBounds() { 
+        return {(config::SCREEN_W - 200.0f) / 2, config::SCREEN_H - 96.0f, 200.0f, 56.0f};
+    }
 
 }  // namespace
 
@@ -80,8 +81,8 @@ void LevelSelectScene::Draw() const {
     theme.DrawBackground();
     theme.DrawText("Select Level", {cx, 90}, 64, p.accent, ui::Align::Center, ui::FontWeight::SemiBold);
     theme.DrawText("Stars: " + std::to_string(context_.progress.totalStars()) + " / " +
-                       std::to_string(total * game::MAX_STARS),
-                   {cx, 170}, 22, p.textDim, ui::Align::Center);
+                    std::to_string(total * game::MAX_STARS),
+                {cx, 170}, 22, p.textDim, ui::Align::Center);
 
     for (std::size_t i = 0; i < levelButtons_.size(); i++) {
         levelButtons_[i].Draw(theme);

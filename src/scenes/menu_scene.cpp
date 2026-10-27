@@ -9,13 +9,13 @@
 
 namespace {
 
-constexpr float BUTTON_W = 260.0f;
-constexpr float BUTTON_H = 62.0f;
-constexpr float BUTTON_GAP = 18.0f;
+    constexpr float BUTTON_W = 260.0f;
+    constexpr float BUTTON_H = 62.0f;
+    constexpr float BUTTON_GAP = 18.0f;
 
-Rectangle CenteredButton(float y) {
-    return {(config::SCREEN_W - BUTTON_W) / 2, y, BUTTON_W, BUTTON_H};
-}
+    Rectangle CenteredButton(float y) {
+        return {(config::SCREEN_W - BUTTON_W) / 2, y, BUTTON_W, BUTTON_H};
+    }
 
 }  // namespace
 
