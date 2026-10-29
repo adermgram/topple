@@ -13,7 +13,7 @@ namespace game {
         Ball(physics::World& world, Vector2 centerPx, BallKind kind);
 
         void Launch(Vector2 velocityPxPerSec);
-        void Draw() const;
+        void Draw(const physics::World& world) const;
 
         BallKind kind() const { return kind_; }
         b2Body* body() const { return body_; }

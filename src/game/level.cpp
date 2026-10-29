@@ -196,9 +196,9 @@ namespace game {
     }
 
     void Level::Draw() const {
-        for (const Block& block : blocks_) block.Draw();
-        for (const Target& target : targets_) target.Draw();
-        for (const Ball& ball : balls_) ball.Draw();
+        for (const Block& block : blocks_) block.Draw(world_);
+        for (const Target& target : targets_) target.Draw(world_);
+        for (const Ball& ball : balls_) ball.Draw(world_);
         effects_.Draw();
     }
 

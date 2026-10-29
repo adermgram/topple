@@ -17,7 +17,7 @@ namespace game {
 
         void ApplyImpact(float impulse);   // gentle contact is ignored
         void Update(float dt);
-        void Draw() const;
+        void Draw(const physics::World& world) const;
 
         bool destroyed() const { return health_ <= 0.0f; }
         b2Body* body() const { return body_; }

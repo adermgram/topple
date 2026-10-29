@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include <box2d/box2d.h>
+#include <unordered_map>
 #include <vector>
 
 // A thin wrapper over Box2D. The rest of the game works in pixels with y pointing down, like the screen; metres only exist in this folder.
@@ -39,14 +40,25 @@ namespace physics {
         Vector2 point;
     };
 
+    // Where a body is drawn: pixels, and radians turning clockwise
+    struct Pose {
+        Vector2 position;
+        float angle;
+    };
+
     class World {
     public:
         World();
-        World(const World&) = delete;   
+        World(const World&) = delete;
         World& operator=(const World&) = delete;
 
         // Runs as many fixed steps as the elapsed time needs. Replaces the previous impacts().
         void Update(float dt);
+
+        // The body's pose blended between the last two steps by how far the next one is along,
+        // so motion stays smooth when the display refreshes faster than the 60 Hz simulation.
+        // It trails the simulation by up to one step. Use it for drawing only.
+        Pose DrawPose(const b2Body* body) const;
 
         // The world owns every body it creates
         b2Body* CreateBox(Vector2 centerPx, Vector2 sizePx, BodyType type, const Material& material);
@@ -68,7 +80,10 @@ namespace physics {
         b2Body* CreateBody(Vector2 centerPx, BodyType type);
         static void AttachShape(b2Body* body, const b2Shape& shape, const Material& material);
 
+        void RememberPoses();
+
         b2World world_;
+        std::unordered_map<const b2Body*, Pose> previousPoses_;   // before the latest step, dynamic bodies only
         std::vector<Impact> impacts_;
         ImpactListener listener_{impacts_};
         float accumulator_ = 0.0f;

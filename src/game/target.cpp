@@ -44,9 +44,10 @@ namespace game {
         dazed_ = std::max(0.0f, dazed_ - dt);
     }
 
-    void Target::Draw() const {
-        const Vector2 c = position();
-        const float angle = body_->GetAngle();
+    void Target::Draw(const physics::World& world) const {
+        const physics::Pose pose = world.DrawPose(body_);
+        const Vector2 c = pose.position;
+        const float angle = pose.angle;
 
         const float hit = flash_ / FLASH_TIME;   // 1 at the moment of impact, fading to 0
         const float health = std::clamp(health_ / MAX_HEALTH, 0.0f, 1.0f);

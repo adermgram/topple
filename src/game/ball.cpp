@@ -47,7 +47,10 @@ namespace game {
         body_->SetLinearVelocity(physics::ToMeters(velocityPxPerSec));
     }
 
-    void Ball::Draw() const { DrawAt(position(), body_->GetAngle(), kind_); }
+    void Ball::Draw(const physics::World& world) const {
+        const physics::Pose pose = world.DrawPose(body_);
+        DrawAt(pose.position, pose.angle, kind_);
+    }
 
     void Ball::DrawAt(Vector2 centerPx, float angleRad, BallKind kind) {
         const Style& style = StyleFor(kind);

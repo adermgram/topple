@@ -14,7 +14,7 @@ namespace game {
         Block(physics::World& world, Vector2 centerPx, Vector2 sizePx, physics::BodyType type, BlockKind kind);
 
         void ApplyImpact(float impulse);   // only fragile kinds react; gentle contact is ignored
-        void Draw() const;
+        void Draw(const physics::World& world) const;
 
         bool breakable() const;
         bool destroyed() const { return health_ <= 0.0f; }

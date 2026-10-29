@@ -55,12 +55,14 @@ namespace game {
         health_ -= impulse - style.minDamagingImpulse;
     }
 
-    void Block::Draw() const {
+    void Block::Draw(const physics::World& world) const {
         if (kind_ == BlockKind::Wall) return;
 
         const Style& style = StyleFor(kind_);
-        const Vector2 center = position();
-        const float angle = body_->GetAngle();   // y points down, so a positive angle turns clockwise, like raylib's
+        // y points down, so a positive angle turns clockwise, like raylib's
+        const physics::Pose pose = world.DrawPose(body_);
+        const Vector2 center = pose.position;
+        const float angle = pose.angle;
 
         // Takes a point relative to the block's centre, before rotation
         auto line = [&](Vector2 from, Vector2 to, float thickness, Color color) {
