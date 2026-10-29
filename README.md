@@ -14,7 +14,7 @@ Grab the build for your system from the [releases page](../../releases), unpack 
 - Windows may warn about an unknown publisher, since the program isn't signed. Choose *More info*, then *Run anyway*.
 - On macOS, right-click it and choose *Open* the first time, or run `xattr -d com.apple.quarantine topple` once.
 
-Drag the ball back and let go. The dotted line shows the flight. Wood, stone and glass all behave differently: stone is heavy and never breaks, glass cracks and then shatters. Win with balls to spare for up to three stars. Progress is saved in `progress.txt` next to the program.
+Drag the ball back and let go. The dotted line shows the flight. Wood, stone and glass all behave differently: stone is heavy and never breaks, glass cracks and then shatters. Win with balls to spare for up to three stars. Progress is saved in `progress.txt` in your user data folder (`%APPDATA%\topple` on Windows, `~/Library/Application Support/topple` on macOS, `~/.local/share/topple` on Linux).
 
 | | |
 |---|---|

@@ -2,6 +2,7 @@
 #include "config.h"
 #include "raylib.h"
 #include "scenes/menu_scene.h"
+#include "util/save_path.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -18,7 +19,7 @@ App::WindowGuard::~WindowGuard() { CloseWindow(); }
 App::AudioGuard::AudioGuard() { InitAudioDevice(); }
 App::AudioGuard::~AudioGuard() { CloseAudioDevice(); }
 
-App::App() : progress_(std::string(GetApplicationDirectory()) + "progress.txt") {
+App::App() : progress_(util::SaveFilePath("progress.txt", GetApplicationDirectory())) {
     scenes_.Replace(std::make_unique<MenuScene>(context_));
 }
 
