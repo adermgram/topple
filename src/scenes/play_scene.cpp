@@ -24,6 +24,7 @@ namespace {
 PlayScene::PlayScene(AppContext& context, std::size_t levelIndex)
     : context_(context),
       levelIndex_(levelIndex),
+      title_("Level " + std::to_string(levelIndex + 1) + ": " + game::Levels().at(levelIndex).name),
       level_(game::Levels().at(levelIndex)),
       slingshot_(level_.slingAnchor(), level_.groundY()),
       feedback_(context.sound),
@@ -124,8 +125,7 @@ void PlayScene::Pause() {
     slingshot_.Cancel();   // otherwise the release happens while paused and is lost
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
-    dialog_.Show("PAUSED", "Level " + std::to_string(levelIndex_ + 1) + ": " + game::Levels()[levelIndex_].name,
-                 context_.theme.palette().text,
+    dialog_.Show("PAUSED", title_, context_.theme.palette().text,
                  {{Action::Resume, "Resume", true}, {Action::Retry, "Retry", false}, {Action::Levels, "Levels", false}});
 }
 
@@ -223,8 +223,7 @@ void PlayScene::DrawHud() const {
     DrawAmmoQueue();
     theme.DrawText("Targets left: " + std::to_string(level_.targetsRemaining()),
                    {config::SCREEN_W - 20.0f, 70}, 22, p.textDim, ui::Align::Right);
-    theme.DrawText("Level " + std::to_string(levelIndex_ + 1) + ": " + game::Levels()[levelIndex_].name,
-                   {cx, 22}, 26, p.text, ui::Align::Center, ui::FontWeight::SemiBold);
+    theme.DrawText(title_, {cx, 22}, 26, p.text, ui::Align::Center, ui::FontWeight::SemiBold);
 
     if (phase_ != Phase::Playing) return;
 

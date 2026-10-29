@@ -8,6 +8,7 @@
 #include "ui/button.h"
 #include "ui/choice_dialog.h"
 #include <cstddef>
+#include <string>
 
 class PlayScene : public Scene {
 public:
@@ -37,7 +38,8 @@ private:
 
     AppContext& context_;
     std::size_t levelIndex_;
-    game::Level level_; 
+    std::string title_;   // "Level 3: Name", built once
+    game::Level level_;
     game::Slingshot slingshot_;
     game::Feedback feedback_;
     ui::Button levelsButton_;
