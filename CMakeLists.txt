@@ -28,6 +28,7 @@ set(BOX2D_BUILD_TESTBED OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
   box2d
   URL https://github.com/erincatto/box2d/archive/refs/tags/v2.4.1.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
 FetchContent_MakeAvailable(raylib box2d)

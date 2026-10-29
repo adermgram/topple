@@ -44,7 +44,21 @@ cmake --build build
 cmake --build build --target run
 ```
 
-On Windows with MinGW use `--preset mingw`. On Linux you also need the X11 and OpenGL headers:
+### Windows
+
+Pick the preset that matches your compiler. Don't use `default` on Windows: CMake may choose NMake, which only works inside a Visual Studio developer prompt.
+
+| Compiler | Configure | Build |
+|---|---|---|
+| MinGW-w64 (g++) and [Ninja](https://ninja-build.org/) | `cmake --preset mingw` | `cmake --build build` |
+| MinGW-w64 with `mingw32-make` | `cmake --preset mingw-make` | `cmake --build build` |
+| Visual Studio 2022 (C++ workload) | `cmake --preset msvc` | `cmake --build build --config Release` |
+
+With Visual Studio the program ends up in `build\Release\`.
+
+### Linux
+
+You also need the X11 and OpenGL headers:
 
 ```
 sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev

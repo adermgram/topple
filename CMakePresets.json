@@ -14,7 +14,17 @@
     {
       "name": "mingw",
       "inherits": "default",
+      "generator": "Ninja"
+    },
+    {
+      "name": "mingw-make",
+      "inherits": "default",
       "generator": "MinGW Makefiles"
+    },
+    {
+      "name": "msvc",
+      "binaryDir": "${sourceDir}/build",
+      "generator": "Visual Studio 17 2022"
     }
   ]
 }
