@@ -21,6 +21,7 @@ Drag the ball back and let go. The dotted line shows the flight. Wood, stone and
 | Mouse | Aim, fire, split |
 | Esc | Pause, or back out of a menu |
 | M | Mute |
+| F11 | Fullscreen |
 
 ## Balls
 

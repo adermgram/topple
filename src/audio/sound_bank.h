@@ -22,6 +22,7 @@ namespace audio {
         void PlayVaried(Sfx sfx, float volume = 1.0f, float variation = 0.08f);
 
         void ToggleMute();
+        bool muted() const { return muted_; }
 
     private:
         // Each effect has a few voices (aliases sharing one set of samples), so quick repeats overlap instead of cutting each other off

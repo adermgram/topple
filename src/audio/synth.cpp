@@ -3,7 +3,7 @@
 #include <cmath>
 
 
-//everthing in this file is luck, trial and error, and AI
+// Every sound is generated in code. The frequencies, envelopes and noise mixes were tuned by ear, so adjust them by listening rather than by calculation.
 
 namespace audio {
 

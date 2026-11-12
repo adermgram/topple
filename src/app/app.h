@@ -22,8 +22,15 @@ private:
         AudioGuard();
         ~AudioGuard();
     };
+    // The game is drawn at a fixed size here, then scaled to whatever the window is
+    struct CanvasGuard {
+        CanvasGuard();
+        ~CanvasGuard();
+        RenderTexture2D texture;
+    };
 
     WindowGuard window_;
+    CanvasGuard canvas_;
     AudioGuard audio_;
     ui::Theme theme_;
     SceneManager scenes_;

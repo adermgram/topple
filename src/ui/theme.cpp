@@ -1,4 +1,5 @@
 #include "ui/theme.h"
+#include "config.h"
 
 namespace ui {
 
@@ -48,7 +49,7 @@ namespace ui {
     }
 
     void Theme::DrawBackground() const {
-        DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), palette_.bgTop, palette_.bgBottom);
+        DrawRectangleGradientV(0, 0, config::SCREEN_W, config::SCREEN_H, palette_.bgTop, palette_.bgBottom);
     }
 
 }  // namespace ui
